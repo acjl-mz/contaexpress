@@ -35,7 +35,9 @@
 - [x] Arquivo documental com metadados, hash SHA-256 e acesso controlado por empresa.
 - [x] Associação opcional de documentos a lançamentos contabilísticos.
 - [x] Interface de arquivo e descarga autenticada de ficheiros.
-- Tarefas, pendências e estado do fecho mensal.
+- [x] Registo de tarefas com categorias, prioridade, prazo, estado e auditoria.
+- [x] Filtros por estado e indicadores de tarefas pendentes, atrasadas e concluídas.
+- [ ] Modelo de fecho mensal com checklist padrão por período e bloqueios de encerramento.
 
 ## Etapa 5 — Relatórios e robustez
 - Balanço e demonstração de resultados, após validação contabilística.
