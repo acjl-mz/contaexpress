@@ -12,7 +12,8 @@
 - [x] Bootstrap controlado do primeiro administrador.
 - [x] API inicial de registo e listagem de empresas com autorização no servidor.
 - [x] Registo de auditoria para criação de empresa.
-- [ ] Rate limiting e protecção operacional contra tentativas repetidas de login.
+- [x] Rate limiting inicial para tentativas repetidas de login por e-mail e IP (requer migração 006).
+- [ ] Testes automatizados de segurança e concorrência para o rate limiting.
 - [ ] Fluxo de convite, recuperação e alteração de palavra-passe.
 - [ ] Testes automatizados de autenticação e isolamento multempresa.
 
