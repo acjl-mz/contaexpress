@@ -98,21 +98,31 @@ export async function POST(request: NextRequest) {
 
     const filename = safeFilename(upload.name);
     const sha256 = createHash("sha256").update(bytes).digest("hex");
-    const result = await db.query(
-      `INSERT INTO accounting_documents
-         (accounting_entity_id, journal_entry_id, original_filename, mime_type, file_size_bytes, sha256, file_data, description, uploaded_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING id, original_filename AS filename, mime_type AS "mimeType",
-                 file_size_bytes AS "fileSizeBytes", created_at AS "createdAt"`,
-      [entityId, entryId, filename, upload.type, bytes.length, sha256, bytes, description, user.id],
-    );
-    await db.query(
-      `INSERT INTO audit_events (organisation_id, accounting_entity_id, actor_user_id, event_type, target_type, target_id, details)
-       SELECT organisation_id, $1, $2, 'accounting_document.uploaded', 'accounting_document', $3, $4::jsonb
-       FROM accounting_entities WHERE id = $1`,
-      [entityId, user.id, result.rows[0].id, JSON.stringify({ filename, fileSizeBytes: bytes.length, mimeType: upload.type, sha256 })],
-    );
-    return NextResponse.json({ document: result.rows[0] }, { status: 201 });
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await client.query(
+        `INSERT INTO accounting_documents
+           (accounting_entity_id, journal_entry_id, original_filename, mime_type, file_size_bytes, sha256, file_data, description, uploaded_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING id, original_filename AS filename, mime_type AS "mimeType",
+                   file_size_bytes AS "fileSizeBytes", created_at AS "createdAt"`,
+        [entityId, entryId, filename, upload.type, bytes.length, sha256, bytes, description, user.id],
+      );
+      await client.query(
+        `INSERT INTO audit_events (organisation_id, accounting_entity_id, actor_user_id, event_type, target_type, target_id, details)
+         SELECT organisation_id, $1, $2, 'accounting_document.uploaded', 'accounting_document', $3, $4::jsonb
+         FROM accounting_entities WHERE id = $1`,
+        [entityId, user.id, result.rows[0].id, JSON.stringify({ filename, fileSizeBytes: bytes.length, mimeType: upload.type, sha256 })],
+      );
+      await client.query("COMMIT");
+      return NextResponse.json({ document: result.rows[0] }, { status: 201 });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error("Falha ao arquivar documento:", error);
     return NextResponse.json({ error: "Não foi possível arquivar o documento." }, { status: 500 });
