@@ -347,3 +347,8 @@ h2{font-size:17px;margin:0;font-weight:800}
  tr{break-inside:avoid}
 }
 @media(max-width:560px){.report-export-actions{width:100%;display:grid;grid-template-columns:1fr}.report-export-actions button{justify-content:center}}
+
+.report-loading{display:flex;align-items:center;gap:10px;padding:18px 20px;margin-bottom:16px;color:#62766b;font-size:12px}
+.report-loading-icon{animation:report-spin 1.2s linear infinite}
+@keyframes report-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.report-loading-icon{animation:none}}
