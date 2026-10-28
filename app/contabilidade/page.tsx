@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, CheckCircle2, CircleAlert, RefreshCw, Settings2, Plus, Send, FileText, Building2, LogOut, RotateCcw } from "lucide-react";
+import { ArrowLeft, CalendarClock, BookOpen, CheckCircle2, CircleAlert, RefreshCw, Settings2, Plus, Send, FileText, Building2, LogOut, RotateCcw } from "lucide-react";
 
 type Company = { id: string; legalName: string; taxNumber: string | null; currency: string; status: string };
 type Account = { id: string; code: string; name: string; accountType: string; parentAccountId: string | null; isPostable: boolean; isActive: boolean };
