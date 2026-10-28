@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, FileBarChart2, RefreshCw, CircleAlert, Building2, LogOut } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Download, FileBarChart2, RefreshCw, CircleAlert, LogOut } from "lucide-react";
 
 type Company = { id: string; legalName: string; taxNumber: string | null; currency: string };
 type Account = { id: string; code: string; name: string; accountType: string };
@@ -90,11 +91,11 @@ export default function AccountingReportsPage() {
 
   return <main className="companies-shell">
     <header className="companies-topbar">
-      <a className="brand" href="/"><span className="brand-mark">C<span>.</span></span><span className="brand-copy"><strong>ContaExpress</strong><small>GESTÃO CONTABILÍSTICA</small></span></a>
+      <Link className="brand" href="/"><span className="brand-mark">C<span>.</span></span><span className="brand-copy"><strong>ContaExpress</strong><small>GESTÃO CONTABILÍSTICA</small></span></Link>
       <div className="companies-user"><a href="/contabilidade" className="secondary-button"><ArrowLeft size={14}/> Contabilidade</a><button className="icon-button" onClick={logout} aria-label="Terminar sessão" title="Terminar sessão"><LogOut size={17}/></button></div>
     </header>
     <section className="companies-content accounting-content">
-      <div className="breadcrumb"><a href="/">Espaço de trabalho</a><span>›</span><a href="/contabilidade">Contabilidade</a><span>›</span><strong>Relatórios</strong></div>
+      <div className="breadcrumb"><Link href="/">Espaço de trabalho</Link><span>›</span><Link href="/contabilidade">Contabilidade</Link><span>›</span><strong>Relatórios</strong></div>
       <div className="companies-title-row"><div><p className="eyebrow">ANÁLISE CONTABILÍSTICA</p><h1>Relatórios</h1><p className="welcome-copy">Consulte movimentos confirmados e saldos contabilísticos por período.</p></div><button className="secondary-button" onClick={()=>void generate()} disabled={!entityId || busy}><RefreshCw size={15}/> Actualizar</button></div>
       {error && <div className="inline-error" role="alert"><CircleAlert size={18}/>{error}</div>}
       <section className="panel accounting-report-filters">
