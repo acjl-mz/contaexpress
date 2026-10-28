@@ -208,3 +208,48 @@ h2{font-size:17px;margin:0;font-weight:800}
 .document-download{flex:0 0 34px}
 @media(max-width:950px){.accounting-document-layout{grid-template-columns:1fr}}
 @media(max-width:680px){.document-upload-form{padding:0 14px 16px}.document-list{padding:0 13px}.document-row{gap:9px}.document-file-icon{height:34px;width:34px;flex-basis:34px}.document-info strong{font-size:11px}.document-info>span,.document-info small{font-size:9px}.document-download{height:31px;width:31px;flex-basis:31px}}
+
+
+/* Accounting tasks and monthly close */
+.task-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:16px 18px;margin-bottom:18px}
+.task-company-field{width:min(440px,100%);margin:0}
+.task-toolbar>.secondary-button{flex:0 0 auto}
+.task-metrics-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-bottom:18px}
+.task-create-form{margin-bottom:18px}
+.task-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:0 20px 20px}
+.task-field-wide{grid-column:1/-1}
+.task-form-grid textarea{resize:vertical;min-height:80px}
+.task-create-form .form-actions{padding:0 20px 20px}
+.task-list-heading{padding-bottom:17px}
+.task-filters{display:flex;gap:6px;flex-wrap:wrap;padding:0 20px 16px;border-bottom:1px solid #edf0f2}
+.task-filter{border:1px solid #e5eaee;background:#fff;color:#71808c;border-radius:7px;padding:7px 10px;font-size:11px;font-weight:600;cursor:pointer}
+.task-filter.active{background:var(--green-soft);border-color:#cfe8dc;color:var(--green-dark)}
+.task-list{padding:0 20px}
+.task-row{display:flex;align-items:flex-start;gap:13px;padding:17px 0;border-bottom:1px solid #edf0f2}
+.task-row:last-child{border-bottom:0}
+.task-status-symbol{display:grid;place-items:center;flex:0 0 36px;height:36px;border-radius:9px;background:#f2f5f6;color:#84929a}
+.task-status-symbol.completed{background:#e6f5ed;color:#20835e}
+.task-status-symbol.blocked{background:#fff0e7;color:#b66b32}
+.task-status-symbol.cancelled{background:#fbeeee;color:#b65b5b}
+.task-details{flex:1;min-width:0;display:grid;gap:7px}
+.task-title-line{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.task-title-line strong{font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.task-details>p{font-size:11px;color:#71808c;line-height:1.6;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.task-priority,.task-status-pill{display:inline-flex;align-items:center;border-radius:5px;padding:4px 6px;font-size:9px;font-weight:700;white-space:nowrap}
+.task-priority.low{background:#f1f4f5;color:#7b8992}
+.task-priority.normal{background:#edf3f6;color:#607b8b}
+.task-priority.high{background:#fff2dc;color:#a16b16}
+.task-priority.urgent{background:#fdeaea;color:#b74444}
+.task-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:#87949c;font-size:10px;line-height:1.5}
+.task-date{display:inline-flex;align-items:center;gap:4px}
+.task-date.overdue{color:#b74c4c;font-weight:700}
+.task-row-actions{display:grid;gap:8px;justify-items:end;flex:0 0 auto}
+.task-status-pill.pending{background:#f1f4f5;color:#72818a}
+.task-status-pill.in_progress{background:#e8f3fc;color:#3479aa}
+.task-status-pill.blocked{background:#fff0e3;color:#a76529}
+.task-status-pill.completed{background:#e5f5ed;color:#25815e}
+.task-status-pill.cancelled{background:#fbecec;color:#ad5c5c}
+.task-row-actions select{max-width:130px;font-size:10px;padding:6px 8px;border:1px solid #e3e9ec;border-radius:6px;background:#fff;color:#61727d}
+.task-overdue-icon{background:#fff1e8;color:#b86b38}
+@media(max-width:800px){.task-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.task-row{flex-wrap:wrap}.task-row-actions{margin-left:49px;display:flex;align-items:center;justify-items:start}.task-list{padding:0 14px}}
+@media(max-width:560px){.task-toolbar{align-items:stretch;flex-direction:column}.task-company-field{width:100%}.task-metrics-grid{grid-template-columns:1fr}.task-form-grid{grid-template-columns:1fr;padding:0 14px 16px}.task-field-wide{grid-column:auto}.task-create-form .form-actions{padding:0 14px 16px}.task-filters{padding:0 12px 13px}.task-filter{padding:6px 8px;font-size:10px}.task-row{gap:9px}.task-status-symbol{flex-basis:32px;height:32px}.task-row-actions{margin-left:41px}.task-title-line strong{font-size:11px}}
