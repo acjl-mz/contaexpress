@@ -112,9 +112,10 @@ export async function GET(request: NextRequest) {
                 COALESCE(SUM(l.debit), 0)::numeric(20,2) AS debit,
                 COALESCE(SUM(l.credit), 0)::numeric(20,2) AS credit
          FROM chart_of_accounts a
-         LEFT JOIN journal_entry_lines l ON l.accounting_entity_id = a.accounting_entity_id AND l.account_id = a.id
-         LEFT JOIN journal_entries e ON e.id = l.entry_id AND e.accounting_entity_id = l.accounting_entity_id
+         LEFT JOIN journal_entries e ON e.accounting_entity_id = a.accounting_entity_id
            AND e.status IN ('posted', 'reversed') AND ($2::date IS NULL OR e.entry_date <= $2::date)
+         LEFT JOIN journal_entry_lines l ON l.entry_id = e.id AND l.accounting_entity_id = e.accounting_entity_id
+           AND l.account_id = a.id
          WHERE a.accounting_entity_id = $1 AND a.account_type IN ('asset', 'liability', 'equity')
          GROUP BY a.id, a.code, a.name, a.account_type
          ORDER BY a.code`,
@@ -154,11 +155,12 @@ export async function GET(request: NextRequest) {
                 COALESCE(SUM(l.debit), 0)::numeric(20,2) AS debit,
                 COALESCE(SUM(l.credit), 0)::numeric(20,2) AS credit
          FROM chart_of_accounts a
-         LEFT JOIN journal_entry_lines l ON l.accounting_entity_id = a.accounting_entity_id AND l.account_id = a.id
-         LEFT JOIN journal_entries e ON e.id = l.entry_id AND e.accounting_entity_id = l.accounting_entity_id
+         LEFT JOIN journal_entries e ON e.accounting_entity_id = a.accounting_entity_id
            AND e.status IN ('posted', 'reversed')
            AND ($2::date IS NULL OR e.entry_date >= $2::date)
            AND ($3::date IS NULL OR e.entry_date <= $3::date)
+         LEFT JOIN journal_entry_lines l ON l.entry_id = e.id AND l.accounting_entity_id = e.accounting_entity_id
+           AND l.account_id = a.id
          WHERE a.accounting_entity_id = $1 AND a.account_type IN ('income', 'expense')
          GROUP BY a.id, a.code, a.name, a.account_type
          ORDER BY a.code`,
