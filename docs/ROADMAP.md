@@ -24,9 +24,11 @@
 - [x] Bloqueio de alteração e eliminação de lançamentos confirmados através de triggers.
 - [x] Primeira interface para plano de contas e diário geral.
 - [ ] Testes automatizados de integração com PostgreSQL e revisão contabilística do plano de contas.
-- [ ] Fluxo formal de estorno e reconciliação da entrada original.
+- [x] Fluxo formal de estorno com lançamento inverso, referência ao original, auditoria e bloqueio de duplicação.
+- [ ] Testes automatizados de integração PostgreSQL para confirmar estornos, períodos fechados e concorrência.
 - [x] API e interface inicial do razão por conta e balancete de verificação, com filtros por data e exportação CSV.
-- [ ] Relatórios de diário com linhas completas e reconciliação independente dos saldos.
+- [x] Diário geral detalhado com conta, descrição, estado, diário, débitos e créditos; exportação CSV.
+- [ ] Reconciliação independente dos saldos e testes automatizados dos relatórios.
 
 ## Etapa 4 — Documentos e acompanhamento
 - Arquivo com metadados e acesso controlado.
