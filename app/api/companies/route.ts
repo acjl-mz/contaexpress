@@ -19,13 +19,7 @@ export async function GET() {
        FROM accounting_entities e
        JOIN organisations o ON o.id = e.organisation_id
        WHERE e.organisation_id = $1 AND e.status <> 'archived'
-         AND (
-           $2 = ANY(ARRAY['superadmin', 'client_manager']::text[])
-           OR EXISTS (
-             SELECT 1 FROM entity_memberships em
-             WHERE em.accounting_entity_id = e.id AND em.user_id = $3
-           )
-         )
+         AND user_can_access_entity($3, e.id)
        ORDER BY e.created_at DESC`,
       [user.organisationId, user.role, user.id],
     );
