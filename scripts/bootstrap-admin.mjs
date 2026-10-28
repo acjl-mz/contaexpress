@@ -33,8 +33,8 @@ try {
     [org.rows[0].id, user.rows[0].id],
   );
   await client.query(
-    "INSERT INTO audit_events (organisation_id, actor_user_id, event_type, target_type, target_id, details) VALUES ($1, $2, 'admin.bootstrap', 'app_user', $2, $3::jsonb)",
-    [org.rows[0].id, user.rows[0].id, JSON.stringify({ email, setup: "one-time-script" })],
+    "INSERT INTO audit_events (organisation_id, actor_user_id, event_type, target_type, target_id, details) VALUES ($1, $2, 'admin.bootstrap', 'app_user', $3, $4::jsonb)",
+    [org.rows[0].id, user.rows[0].id, String(user.rows[0].id), JSON.stringify({ email, setup: "one-time-script" })],
   );
   await client.query("COMMIT");
   console.log("Administrador criado com sucesso. Guarde as credenciais num gestor de palavras-passe.");
