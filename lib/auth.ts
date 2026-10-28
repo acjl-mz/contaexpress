@@ -57,11 +57,18 @@ export async function getSession(): Promise<SessionUser | null> {
     const { payload } = await jwtVerify(token, sessionKey(), { algorithms: ["HS256"] });
     if (!payload.sub || typeof payload.email !== "string" || typeof payload.fullName !== "string" || typeof payload.organisationId !== "string" || typeof payload.role !== "string") return null;
     const result = await db.query(
-      `SELECT id FROM app_users WHERE id = $1 AND status = 'active'`,
-      [payload.sub],
+      `SELECT u.id, u.email, u.full_name, om.organisation_id, om.role
+       FROM app_users u
+       JOIN organisation_memberships om ON om.user_id = u.id
+       JOIN organisations o ON o.id = om.organisation_id AND o.status = 'active'
+       WHERE u.id = $1 AND u.status = 'active'
+         AND om.organisation_id = $2 AND om.role = $3
+       LIMIT 1`,
+      [payload.sub, payload.organisationId, payload.role],
     );
-    if (!result.rowCount) return null;
-    return { id: payload.sub, email: payload.email, fullName: payload.fullName, organisationId: payload.organisationId, role: payload.role };
+    const current = result.rows[0];
+    if (!current) return null;
+    return { id: current.id, email: current.email, fullName: current.full_name, organisationId: current.organisation_id, role: current.role };
   } catch {
     return null;
   }
