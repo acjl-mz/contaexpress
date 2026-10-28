@@ -7,10 +7,14 @@
 - Documentação de arquitectura, segurança e execução local.
 
 ## Etapa 2 — Identidade e administração
-- Autenticação de utilizadores.
-- Organizações clientes e entidades contabilísticas.
-- Associação utilizador–empresa e permissões no servidor.
-- Registo de auditoria.
+- [x] Modelo de organizações, entidades e memberships.
+- [x] Início e fim de sessão com cookie HTTP-only assinado.
+- [x] Bootstrap controlado do primeiro administrador.
+- [x] API inicial de registo e listagem de empresas com autorização no servidor.
+- [x] Registo de auditoria para criação de empresa.
+- [ ] Rate limiting e protecção operacional contra tentativas repetidas de login.
+- [ ] Fluxo de convite, recuperação e alteração de palavra-passe.
+- [ ] Testes automatizados de autenticação e isolamento multempresa.
 
 ## Etapa 3 — Núcleo contabilístico
 - Plano de contas configurável.
