@@ -29,6 +29,9 @@
 - [ ] Testes automatizados de integração PostgreSQL para confirmar estornos, períodos fechados e concorrência.
 - [x] API e interface inicial do razão por conta e balancete de verificação, com filtros por data e exportação CSV.
 - [x] Diário geral detalhado com conta, descrição, estado, diário, débitos e créditos; exportação CSV.
+- [x] API de balanço e demonstração de resultados com filtros de data e cálculo de saldos a partir de lançamentos confirmados.
+- [x] Interface de relatórios com balancete, balanço, demonstração de resultados, diário e razão por conta.
+- [x] Exportação CSV dos relatórios apresentados.
 - [ ] Reconciliação independente dos saldos e testes automatizados dos relatórios.
 
 ## Etapa 4 — Documentos e acompanhamento
@@ -43,7 +46,7 @@
 - [ ] Testes de integração para concorrência e permissões de fecho mensal.
 
 ## Etapa 5 — Relatórios e robustez
-- Balanço e demonstração de resultados, após validação contabilística.
+- [x] Primeira versão técnica do balanço e demonstração de resultados (requer validação contabilística com dados de teste antes de uso externo).
 - [x] Exportação CSV do razão e do balancete.
 - [ ] Exportação PDF com layout imprimível e validação de totais.
 - Testes de isolamento, integridade e permissões.
