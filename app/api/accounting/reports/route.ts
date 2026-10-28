@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { validDateRange } from "@/lib/accounting/report-validation.mjs";
 
 export const runtime = "nodejs";
 
-function validDate(value: string | null): value is string {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
-}
 
 export async function GET(request: NextRequest) {
   const user = await getSession();
@@ -23,7 +18,7 @@ export async function GET(request: NextRequest) {
   const accountId = params.get("accountId");
   if (!entityId) return NextResponse.json({ error: "Indique a empresa." }, { status: 400 });
   if (!["trial-balance", "ledger", "journal", "balance-sheet", "income-statement"].includes(report)) return NextResponse.json({ error: "Tipo de relatório inválido." }, { status: 400 });
-  if ((from && !validDate(from)) || (to && !validDate(to)) || (from && to && from > to)) {
+  if (!validDateRange(from, to)) {
     return NextResponse.json({ error: "O intervalo de datas é inválido." }, { status: 400 });
   }
   if (report === "ledger" && !accountId) return NextResponse.json({ error: "Seleccione uma conta para consultar o razão." }, { status: 400 });
