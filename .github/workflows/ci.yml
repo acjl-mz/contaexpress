@@ -58,6 +58,8 @@ jobs:
           done
       - name: Verify administrator bootstrap
         run: npm run bootstrap:admin
+      - name: Unit tests
+        run: npm run test:unit
       - name: TypeScript
         run: npm run typecheck
       - name: ESLint
