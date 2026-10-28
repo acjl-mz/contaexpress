@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { canManageCompanies, getSession, writeAudit } from "@/lib/auth";
+import { canManageCompanies, getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export const runtime = "nodejs";
