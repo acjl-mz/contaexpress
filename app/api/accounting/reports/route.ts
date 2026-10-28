@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const to = params.get("to");
   const accountId = params.get("accountId");
   if (!entityId) return NextResponse.json({ error: "Indique a empresa." }, { status: 400 });
-  if (!["trial-balance", "ledger", "journal"].includes(report)) return NextResponse.json({ error: "Tipo de relatório inválido." }, { status: 400 });
+  if (!["trial-balance", "ledger", "journal", "balance-sheet", "income-statement"].includes(report)) return NextResponse.json({ error: "Tipo de relatório inválido." }, { status: 400 });
   if ((from && !validDate(from)) || (to && !validDate(to)) || (from && to && from > to)) {
     return NextResponse.json({ error: "O intervalo de datas é inválido." }, { status: 400 });
   }
@@ -104,6 +104,75 @@ export async function GET(request: NextRequest) {
         credit: Number(lines.reduce((sum, line) => sum + Number(line.credit), 0).toFixed(2)),
         closingBalance: Number(running.toFixed(2)),
       } });
+    }
+
+    if (report === "balance-sheet") {
+      const result = await db.query(
+        `SELECT a.id AS "accountId", a.code, a.name, a.account_type AS "accountType",
+                COALESCE(SUM(l.debit), 0)::numeric(20,2) AS debit,
+                COALESCE(SUM(l.credit), 0)::numeric(20,2) AS credit
+         FROM chart_of_accounts a
+         LEFT JOIN journal_entry_lines l ON l.accounting_entity_id = a.accounting_entity_id AND l.account_id = a.id
+         LEFT JOIN journal_entries e ON e.id = l.entry_id AND e.accounting_entity_id = l.accounting_entity_id
+           AND e.status IN ('posted', 'reversed') AND ($2::date IS NULL OR e.entry_date <= $2::date)
+         WHERE a.accounting_entity_id = $1 AND a.account_type IN ('asset', 'liability', 'equity')
+         GROUP BY a.id, a.code, a.name, a.account_type
+         ORDER BY a.code`,
+        [entityId, to],
+      );
+      const accounts = result.rows.map((row) => {
+        const debit = Number(row.debit);
+        const credit = Number(row.credit);
+        const balance = row.accountType === "asset" ? debit - credit : credit - debit;
+        return { ...row, debit, credit, balance: Number(balance.toFixed(2)) };
+      }).filter((row) => Math.abs(row.balance) > 0.005);
+      const earnings = await db.query(
+        `SELECT COALESCE(SUM(CASE WHEN a.account_type = 'income' THEN l.credit - l.debit
+                                  WHEN a.account_type = 'expense' THEN l.debit - l.credit ELSE 0 END), 0)::numeric(20,2) AS result
+         FROM journal_entry_lines l
+         JOIN journal_entries e ON e.id = l.entry_id AND e.accounting_entity_id = l.accounting_entity_id
+         JOIN chart_of_accounts a ON a.id = l.account_id AND a.accounting_entity_id = l.accounting_entity_id
+         WHERE l.accounting_entity_id = $1 AND e.status IN ('posted', 'reversed')
+           AND a.account_type IN ('income', 'expense') AND ($2::date IS NULL OR e.entry_date <= $2::date)`,
+        [entityId, to],
+      );
+      const assets = Number(accounts.filter(a => a.accountType === "asset").reduce((sum, a) => sum + a.balance, 0).toFixed(2));
+      const liabilities = Number(accounts.filter(a => a.accountType === "liability").reduce((sum, a) => sum + a.balance, 0).toFixed(2));
+      const equity = Number(accounts.filter(a => a.accountType === "equity").reduce((sum, a) => sum + a.balance, 0).toFixed(2));
+      const accumulatedResult = Number(earnings.rows[0]?.result ?? 0);
+      return NextResponse.json({
+        report, asOf: to, accounts, accumulatedResult,
+        totals: { assets, liabilities, equity, accumulatedResult,
+          liabilitiesAndEquity: Number((liabilities + equity + accumulatedResult).toFixed(2)),
+          difference: Number((assets - liabilities - equity - accumulatedResult).toFixed(2)) },
+      });
+    }
+
+    if (report === "income-statement") {
+      const result = await db.query(
+        `SELECT a.id AS "accountId", a.code, a.name, a.account_type AS "accountType",
+                COALESCE(SUM(l.debit), 0)::numeric(20,2) AS debit,
+                COALESCE(SUM(l.credit), 0)::numeric(20,2) AS credit
+         FROM chart_of_accounts a
+         LEFT JOIN journal_entry_lines l ON l.accounting_entity_id = a.accounting_entity_id AND l.account_id = a.id
+         LEFT JOIN journal_entries e ON e.id = l.entry_id AND e.accounting_entity_id = l.accounting_entity_id
+           AND e.status IN ('posted', 'reversed')
+           AND ($2::date IS NULL OR e.entry_date >= $2::date)
+           AND ($3::date IS NULL OR e.entry_date <= $3::date)
+         WHERE a.accounting_entity_id = $1 AND a.account_type IN ('income', 'expense')
+         GROUP BY a.id, a.code, a.name, a.account_type
+         ORDER BY a.code`,
+        [entityId, from, to],
+      );
+      const accounts = result.rows.map((row) => {
+        const debit = Number(row.debit);
+        const credit = Number(row.credit);
+        const amount = row.accountType === "income" ? credit - debit : debit - credit;
+        return { ...row, debit, credit, amount: Number(amount.toFixed(2)) };
+      }).filter((row) => Math.abs(row.amount) > 0.005);
+      const income = Number(accounts.filter(a => a.accountType === "income").reduce((sum, a) => sum + a.amount, 0).toFixed(2));
+      const expenses = Number(accounts.filter(a => a.accountType === "expense").reduce((sum, a) => sum + a.amount, 0).toFixed(2));
+      return NextResponse.json({ report, from, to, accounts, totals: { income, expenses, netResult: Number((income-expenses).toFixed(2)) } });
     }
 
     const result = await db.query(
