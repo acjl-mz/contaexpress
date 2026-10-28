@@ -178,3 +178,11 @@ h2{font-size:17px;margin:0;font-weight:800}
 .table-action-button:hover{background:#e0f3e8}
 .compact-empty{min-height:180px}
 @media(max-width:760px){.accounting-stats{grid-template-columns:1fr}.accounting-company-panel{align-items:stretch;flex-direction:column;padding:15px}.accounting-company-select{min-width:0}.accounting-company-select select{max-width:none}.accounting-company-meta{padding-bottom:0}.accounting-table-panel .company-table-toolbar{align-items:flex-start}.accounting-form-note{margin:12px 14px 0}}
+
+/* Accounting reports */
+.accounting-header-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.accounting-report-filters{padding:20px;margin-bottom:20px}
+.accounting-report-filters .company-form-grid{padding:0}
+.accounting-report-filters .form-actions{padding:18px 0 0;margin-top:18px;border-top:1px solid #edf1f3}
+.accounting-table-panel .company-table tfoot th{background:#f6f9fa;color:#334b57;font-weight:800;border-top:1px solid #dfe7eb}
+@media(max-width:760px){.accounting-header-actions{width:100%}.accounting-header-actions>*{flex:1;justify-content:center}.accounting-report-filters{padding:14px}}
