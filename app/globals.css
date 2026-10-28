@@ -323,3 +323,27 @@ h2{font-size:17px;margin:0;font-weight:800}
 .report-results .companies-footnote{padding:0 22px 18px}
 @media(max-width:900px){.report-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.report-account-field{grid-column:span 2}}
 @media(max-width:560px){.report-filters{grid-template-columns:1fr;padding:14px}.report-account-field{grid-column:auto}.report-heading{align-items:flex-start;flex-direction:column;padding:17px}.report-heading .secondary-button{width:100%;justify-content:center}.report-metrics{padding:13px;grid-template-columns:repeat(2,minmax(0,1fr))}.report-metric{padding:10px}.report-metric strong{font-size:15px}.report-table th,.report-table td{padding:10px}.report-balance-check{margin:12px 13px 0}.report-results .companies-footnote{padding:0 13px 15px}}
+
+
+/* Print-ready financial reports. The browser print dialog can save the report as PDF. */
+.report-export-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+@media print{
+ @page{size:A4 landscape;margin:12mm}
+ body{background:#fff!important;color:#111!important}
+ .companies-topbar,.breadcrumb,.companies-title-row,.report-filters,.report-export-actions,.companies-user,.companies-footnote{display:none!important}
+ .companies-shell,.companies-content,.accounting-content{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;box-shadow:none!important}
+ .report-results{border:0!important;box-shadow:none!important;overflow:visible!important}
+ .report-heading{padding:0 0 10px!important;border-bottom:1px solid #aaa!important}
+ .report-heading h2{font-size:18pt!important;color:#111!important}
+ .report-heading p,.report-heading .eyebrow{color:#444!important}
+ .report-metrics{padding:10px 0!important;background:#fff!important;border-bottom:1px solid #aaa!important;grid-template-columns:repeat(5,minmax(0,1fr))!important}
+ .report-metric{border:1px solid #bbb!important;break-inside:avoid}
+ .report-metric strong,.report-metric span,.report-metric small{color:#111!important}
+ .report-table-wrap{overflow:visible!important}
+ .report-table{font-size:8pt!important;white-space:normal!important}
+ .report-table th,.report-table td{padding:5px 6px!important;color:#111!important;border-color:#bbb!important;max-width:none!important;overflow:visible!important;text-overflow:clip!important}
+ .report-table th{background:#eee!important}
+ .report-balance-check{margin:10px 0!important;border:1px solid #aaa!important;background:#fff!important;color:#111!important}
+ tr{break-inside:avoid}
+}
+@media(max-width:560px){.report-export-actions{width:100%;display:grid;grid-template-columns:1fr}.report-export-actions button{justify-content:center}}
