@@ -157,7 +157,7 @@ export default function AccountingPage() {
   return <main className="companies-shell">
     <header className="companies-topbar">
       <Link className="brand" href="/"><span className="brand-mark">C<span>.</span></span><span className="brand-copy"><strong>ContaExpress</strong><small>GESTÃO CONTABILÍSTICA</small></span></Link>
-      <div className="companies-user"><a href="/empresas" className="secondary-button"><ArrowLeft size={14} /> Empresas</a><button className="icon-button" onClick={logout} aria-label="Terminar sessão" title="Terminar sessão"><LogOut size={17}/></button></div>
+      <div className="companies-user"><Link href="/documentos" className="secondary-button"><FileText size={14}/> Documentos</Link><Link href="/empresas" className="secondary-button"><ArrowLeft size={14} /> Empresas</Link><button className="icon-button" onClick={logout} aria-label="Terminar sessão" title="Terminar sessão"><LogOut size={17}/></button></div>
     </header>
     <section className="companies-content accounting-content">
       <div className="breadcrumb"><Link href="/">Espaço de trabalho</Link><span>›</span><strong>Contabilidade</strong></div>
