@@ -37,7 +37,10 @@
 - [x] Interface de arquivo e descarga autenticada de ficheiros.
 - [x] Registo de tarefas com categorias, prioridade, prazo, estado e auditoria.
 - [x] Filtros por estado e indicadores de tarefas pendentes, atrasadas e concluídas.
-- [ ] Modelo de fecho mensal com checklist padrão por período e bloqueios de encerramento.
+- [x] Modelo de fecho mensal com checklist padrão por período e bloqueios de encerramento.
+- [x] Interface de checklist com progresso, requisitos obrigatórios e confirmação explícita do encerramento.
+- [x] Bloqueio de encerramento com itens obrigatórios pendentes, lançamentos em rascunho ou totais desequilibrados.
+- [ ] Testes de integração para concorrência e permissões de fecho mensal.
 
 ## Etapa 5 — Relatórios e robustez
 - Balanço e demonstração de resultados, após validação contabilística.
