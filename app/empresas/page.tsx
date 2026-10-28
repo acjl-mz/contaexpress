@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Building2, ChevronRight, CircleAlert, LogOut, Plus, RefreshCw, Search } from "lucide-react";
 
 type Company = { id: string; legalName: string; taxNumber: string | null; countryCode: string; currency: string; status: string; createdAt: string };
@@ -68,11 +69,11 @@ export default function CompaniesPage() {
 
   return <main className="companies-shell">
     <header className="companies-topbar">
-      <a className="brand" href="/"><span className="brand-mark">C<span>.</span></span><span className="brand-copy"><strong>ContaExpress</strong><small>GESTÃO CONTABILÍSTICA</small></span></a>
+      <Link className="brand" href="/"><span className="brand-mark">C<span>.</span></span><span className="brand-copy"><strong>ContaExpress</strong><small>GESTÃO CONTABILÍSTICA</small></span></Link>
       <div className="companies-user"><span>{user?.fullName ?? "A carregar..."}</span><button className="icon-button" onClick={logout} aria-label="Terminar sessão" title="Terminar sessão"><LogOut size={17}/></button></div>
     </header>
     <section className="companies-content">
-      <div className="breadcrumb"><a href="/">Espaço de trabalho</a><ChevronRight size={15}/><strong>Empresas</strong></div>
+      <div className="breadcrumb"><Link href="/">Espaço de trabalho</Link><ChevronRight size={15}/><strong>Empresas</strong></div>
       <div className="companies-title-row"><div><p className="eyebrow">CADASTRO E ORGANIZAÇÃO</p><h1>Empresas</h1><p className="welcome-copy">Gira as entidades contabilísticas associadas à sua organização.</p></div><button className="primary-button" onClick={()=>setShowForm(v=>!v)}><Plus size={17}/>{showForm ? "Cancelar" : "Registar empresa"}</button></div>
 
       {error && <div className="inline-error" role="alert"><CircleAlert size={18}/>{error}</div>}
