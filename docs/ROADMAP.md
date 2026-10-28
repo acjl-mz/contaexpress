@@ -17,12 +17,15 @@
 - [ ] Testes automatizados de autenticação e isolamento multempresa.
 
 ## Etapa 3 — Núcleo contabilístico
-- Plano de contas configurável.
-- Exercícios e períodos contabilísticos.
-- Diários e lançamentos com múltiplas linhas.
-- Validação de débitos = créditos.
-- Confirmação, estorno e controlo de períodos.
-- Diário, razão e balancete.
+- [x] Estrutura inicial de plano de contas e API de consulta/criação.
+- [x] Inicialização de exercício fiscal, 12 períodos e diário geral.
+- [x] Criação de rascunhos de lançamentos com múltiplas linhas via API.
+- [x] Confirmação de lançamento com validação transaccional de débitos = créditos, período aberto e contas movimentáveis.
+- [x] Bloqueio de alteração e eliminação de lançamentos confirmados através de triggers.
+- [x] Primeira interface para plano de contas e diário geral.
+- [ ] Testes automatizados de integração com PostgreSQL e revisão contabilística do plano de contas.
+- [ ] Fluxo formal de estorno e reconciliação da entrada original.
+- [ ] Diário, razão e balancete com reconciliação independente.
 
 ## Etapa 4 — Documentos e acompanhamento
 - Arquivo com metadados e acesso controlado.
