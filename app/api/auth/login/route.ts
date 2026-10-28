@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       [email],
     );
     const user = result.rows[0];
-    const valid = user ? await compare(password, user.password_hash) : await compare(password, "$2a$10$7EqJtq98hPqEX7fNZaFWoO5Y4b6FQkD3s2rN7Yj5zYJ1L0mY3bW6K");
+    const valid = user ? await compare(password, user.password_hash) : await compare(password, "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy");
     if (!user || !valid) {
       return NextResponse.json({ error: "Credenciais inválidas." }, { status: 401 });
     }
