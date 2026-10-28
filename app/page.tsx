@@ -24,7 +24,7 @@ const metrics = [
 
 const modules = [
   { name: "Empresas", detail: "Clientes e entidades contabilísticas", icon: Building2, state: "Fundação" },
-  { name: "Contabilidade", detail: "Plano de contas, diários e lançamentos", icon: BookOpen, state: "Planeado" },
+  { name: "Contabilidade", detail: "Plano de contas, diários e lançamentos", icon: BookOpen, state: "MVP" },
   { name: "Documentos", detail: "Arquivo e suporte contabilístico", icon: FileText, state: "Planeado" },
   { name: "Tesouraria", detail: "Caixa, bancos e movimentos", icon: Wallet, state: "Planeado" },
 ];
@@ -41,7 +41,7 @@ export default function HomePage() {
         <nav className="nav-list" aria-label="Navegação principal">
           <a className="nav-item active" href="/"><LayoutDashboard size={18} /> Visão geral</a>
           <a className="nav-item" href="/empresas"><Building2 size={18} /> Empresas <span className="nav-soon">Base</span></a>
-          <a className="nav-item" href="#contabilidade"><BookOpen size={18} /> Contabilidade</a>
+          <a className="nav-item" href="/contabilidade"><BookOpen size={18} /> Contabilidade <span className="nav-soon">MVP</span></a>
           <a className="nav-item" href="#documentos"><FileText size={18} /> Documentos</a>
           <a className="nav-item" href="#tesouraria"><Wallet size={18} /> Tesouraria</a>
           <a className="nav-item" href="#fiscalidade"><ShieldCheck size={18} /> Fiscalidade</a>
@@ -83,7 +83,7 @@ export default function HomePage() {
               <div className="module-list" id="empresas">
                 {modules.map((module) => {
                   const Icon = module.icon;
-                  return <article className="module-row" key={module.name}><span className="module-icon"><Icon size={20} /></span><div className="module-info"><strong>{module.name}</strong><span>{module.detail}</span></div><span className={module.state === "Fundação" ? "state-badge in-progress" : "state-badge"}>{module.state}</span><ChevronRight className="module-chevron" size={17} /></article>;
+                  return <article className="module-row" key={module.name} onClick={module.name === "Contabilidade" ? () => { window.location.href = "/contabilidade"; } : undefined} style={module.name === "Contabilidade" ? { cursor: "pointer" } : undefined}><span className="module-icon"><Icon size={20} /></span><div className="module-info"><strong>{module.name}</strong><span>{module.detail}</span></div><span className={module.state === "Fundação" || module.state === "MVP" ? "state-badge in-progress" : "state-badge"}>{module.state}</span><ChevronRight className="module-chevron" size={17} /></article>;
                 })}
               </div>
               <div className="panel-footer"><span>Os módulos serão activados por etapas.</span><span className="footer-link">Ver roteiro <ArrowUpRight size={15} /></span></div>
