@@ -40,7 +40,7 @@ export default function HomePage() {
         <div className="workspace-label">ESPAÇO DE TRABALHO</div>
         <nav className="nav-list" aria-label="Navegação principal">
           <a className="nav-item active" href="/"><LayoutDashboard size={18} /> Visão geral</a>
-          <a className="nav-item" href="#empresas"><Building2 size={18} /> Empresas <span className="nav-soon">Base</span></a>
+          <a className="nav-item" href="/empresas"><Building2 size={18} /> Empresas <span className="nav-soon">Base</span></a>
           <a className="nav-item" href="#contabilidade"><BookOpen size={18} /> Contabilidade</a>
           <a className="nav-item" href="#documentos"><FileText size={18} /> Documentos</a>
           <a className="nav-item" href="#tesouraria"><Wallet size={18} /> Tesouraria</a>
@@ -61,12 +61,12 @@ export default function HomePage() {
         <div className="page-content">
           <section className="welcome-row">
             <div><p className="eyebrow">PAINEL DE CONTROLO</p><h1>Gestão clara. Contas sob controlo.</h1><p className="welcome-copy">O ponto de partida para organizar empresas, operações contabilísticas e obrigações num só lugar.</p></div>
-            <button className="primary-button" disabled title="Disponível após implementação do módulo de empresas"><Plus size={17} /> Registar empresa</button>
+            <a className="primary-button" href="/empresas"><Plus size={17} /> Gerir empresas</a>
           </section>
 
           <section className="notice" aria-label="Estado da implementação">
             <div className="notice-icon"><ShieldCheck size={20} /></div>
-            <div><strong>Bem-vindo à fundação do ContaExpress</strong><p>Esta versão prepara a estrutura do sistema. Os indicadores não representam dados reais e as operações contabilísticas ainda não estão activas.</p></div>
+            <div><strong>Fundação do ContaExpress</strong><p>O acesso seguro e o registo de empresas estão a ser implementados. Os indicadores ainda não representam dados contabilísticos reais.</p></div>
             <span className="notice-tag">MVP em construção</span>
           </section>
 
