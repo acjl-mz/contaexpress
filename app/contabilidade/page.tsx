@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ArrowLeft, BookOpen, CheckCircle2, CircleAlert, RefreshCw, Settings2, Plus, Send, FileText, Building2, LogOut } from "lucide-react";
 
 type Company = { id: string; legalName: string; taxNumber: string | null; currency: string; status: string };
@@ -132,11 +133,11 @@ export default function AccountingPage() {
 
   return <main className="companies-shell">
     <header className="companies-topbar">
-      <a className="brand" href="/"><span className="brand-mark">C<span>.</span></span><span className="brand-copy"><strong>ContaExpress</strong><small>GESTÃO CONTABILÍSTICA</small></span></a>
+      <Link className="brand" href="/"><span className="brand-mark">C<span>.</span></span><span className="brand-copy"><strong>ContaExpress</strong><small>GESTÃO CONTABILÍSTICA</small></span></Link>
       <div className="companies-user"><a href="/empresas" className="secondary-button"><ArrowLeft size={14} /> Empresas</a><button className="icon-button" onClick={logout} aria-label="Terminar sessão" title="Terminar sessão"><LogOut size={17}/></button></div>
     </header>
     <section className="companies-content accounting-content">
-      <div className="breadcrumb"><a href="/">Espaço de trabalho</a><span>›</span><strong>Contabilidade</strong></div>
+      <div className="breadcrumb"><Link href="/">Espaço de trabalho</Link><span>›</span><strong>Contabilidade</strong></div>
       <div className="companies-title-row"><div><p className="eyebrow">NÚCLEO CONTABILÍSTICO</p><h1>Contabilidade</h1><p className="welcome-copy">Configure o exercício, consulte contas e registe lançamentos contabilísticos.</p></div><div className="accounting-header-actions"><a href="/contabilidade/relatorios" className="secondary-button"><FileText size={15}/> Relatórios</a><button className="secondary-button" onClick={() => entityId && void loadAccounting(entityId)} disabled={!entityId || busy}><RefreshCw size={15}/> Actualizar</button></div></div>
       {error && <div className="inline-error" role="alert"><CircleAlert size={18}/>{error}</div>}
       {notice && <div className="inline-success" role="status"><CheckCircle2 size={18}/>{notice}</div>}
