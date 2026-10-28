@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       );
       const lines = result.rows.map(row => ({ ...row, debit: Number(row.debit), credit: Number(row.credit) }));
       return NextResponse.json({
-        report, from, to, lines,
+        report, from, to, journalLines: lines,
         totals: {
           debit: Number(lines.reduce((sum, row) => sum + row.debit, 0).toFixed(2)),
           credit: Number(lines.reduce((sum, row) => sum + row.credit, 0).toFixed(2)),
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
               COALESCE(SUM(l.credit), 0)::numeric(20,2) AS credit
        FROM chart_of_accounts a
        LEFT JOIN journal_entries e ON e.accounting_entity_id = a.accounting_entity_id
-         AND e.status = 'posted'
+         AND e.status IN ('posted', 'reversed')
          AND ($2::date IS NULL OR e.entry_date >= $2::date)
          AND ($3::date IS NULL OR e.entry_date <= $3::date)
        LEFT JOIN journal_entry_lines l ON l.entry_id = e.id AND l.accounting_entity_id = e.accounting_entity_id
