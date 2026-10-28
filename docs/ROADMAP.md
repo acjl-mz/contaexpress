@@ -32,8 +32,9 @@
 - [ ] Reconciliação independente dos saldos e testes automatizados dos relatórios.
 
 ## Etapa 4 — Documentos e acompanhamento
-- [x] Arquivo com metadados e acesso controlado.
-- Associação de documentos a lançamentos.
+- [x] Arquivo documental com metadados, hash SHA-256 e acesso controlado por empresa.
+- [x] Associação opcional de documentos a lançamentos contabilísticos.
+- [x] Interface de arquivo e descarga autenticada de ficheiros.
 - Tarefas, pendências e estado do fecho mensal.
 
 ## Etapa 5 — Relatórios e robustez
