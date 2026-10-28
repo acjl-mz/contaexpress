@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     const forwardedFor = request.headers.get("x-forwarded-for");
-    const ip = (forwardedFor?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown").slice(0, 100);
+    const ip = (forwardedFor?.split(",").map(value => value.trim()).filter(Boolean).at(-1) || request.headers.get("x-real-ip") || "unknown").slice(0, 100);
     const context = { email, ip };
     if (await isLoginRateLimited(context)) {
       return NextResponse.json({ error: "Demasiadas tentativas de acesso. Aguarde 15 minutos antes de tentar novamente." }, { status: 429 });
