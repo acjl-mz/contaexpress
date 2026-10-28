@@ -2,7 +2,6 @@ import { Pool } from "pg";
 
 declare global {
   // Reuse a single pool during Next.js development hot reloads.
-  // eslint-disable-next-line no-var
   var contaExpressPool: Pool | undefined;
 }
 
