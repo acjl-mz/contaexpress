@@ -48,7 +48,8 @@
 ## Etapa 5 — Relatórios e robustez
 - [x] Primeira versão técnica do balanço e demonstração de resultados (requer validação contabilística com dados de teste antes de uso externo).
 - [x] Exportação CSV do razão e do balancete.
-- [ ] Exportação PDF com layout imprimível e validação de totais.
+- [x] Impressão com layout optimizado para A4 horizontal e opção de guardar como PDF pelo navegador.
+- [ ] Exportação PDF gerada no servidor e validação automatizada de totais.
 - Testes de isolamento, integridade e permissões.
 - Backups e ensaios de restauração.
 
