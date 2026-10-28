@@ -25,7 +25,8 @@
 - [x] Primeira interface para plano de contas e diário geral.
 - [ ] Testes automatizados de integração com PostgreSQL e revisão contabilística do plano de contas.
 - [ ] Fluxo formal de estorno e reconciliação da entrada original.
-- [ ] Diário, razão e balancete com reconciliação independente.
+- [x] API e interface inicial do razão por conta e balancete de verificação, com filtros por data e exportação CSV.
+- [ ] Relatórios de diário com linhas completas e reconciliação independente dos saldos.
 
 ## Etapa 4 — Documentos e acompanhamento
 - Arquivo com metadados e acesso controlado.
@@ -34,7 +35,8 @@
 
 ## Etapa 5 — Relatórios e robustez
 - Balanço e demonstração de resultados, após validação contabilística.
-- Exportações.
+- [x] Exportação CSV do razão e do balancete.
+- [ ] Exportação PDF com layout imprimível e validação de totais.
 - Testes de isolamento, integridade e permissões.
 - Backups e ensaios de restauração.
 
