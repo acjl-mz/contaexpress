@@ -137,7 +137,7 @@ export default function AccountingPage() {
     </header>
     <section className="companies-content accounting-content">
       <div className="breadcrumb"><a href="/">Espaço de trabalho</a><span>›</span><strong>Contabilidade</strong></div>
-      <div className="companies-title-row"><div><p className="eyebrow">NÚCLEO CONTABILÍSTICO</p><h1>Contabilidade</h1><p className="welcome-copy">Configure o exercício, consulte contas e registe lançamentos contabilísticos.</p></div><button className="secondary-button" onClick={() => entityId && void loadAccounting(entityId)} disabled={!entityId || busy}><RefreshCw size={15}/> Actualizar</button></div>
+      <div className="companies-title-row"><div><p className="eyebrow">NÚCLEO CONTABILÍSTICO</p><h1>Contabilidade</h1><p className="welcome-copy">Configure o exercício, consulte contas e registe lançamentos contabilísticos.</p></div><div className="accounting-header-actions"><a href="/contabilidade/relatorios" className="secondary-button"><FileText size={15}/> Relatórios</a><button className="secondary-button" onClick={() => entityId && void loadAccounting(entityId)} disabled={!entityId || busy}><RefreshCw size={15}/> Actualizar</button></div></div>
       {error && <div className="inline-error" role="alert"><CircleAlert size={18}/>{error}</div>}
       {notice && <div className="inline-success" role="status"><CheckCircle2 size={18}/>{notice}</div>}
       <section className="panel accounting-company-panel">
