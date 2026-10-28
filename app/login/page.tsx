@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function LoginPage() {
 
   return <main className="auth-page">
     <section className="auth-card">
-      <a className="brand auth-brand" href="/"><span className="brand-mark">C<span>.</span></span><span className="brand-copy"><strong>ContaExpress</strong><small>GESTÃO CONTABILÍSTICA</small></span></a>
+      <Link className="brand auth-brand" href="/"><span className="brand-mark">C<span>.</span></span><span className="brand-copy"><strong>ContaExpress</strong><small>GESTÃO CONTABILÍSTICA</small></span></Link>
       <p className="eyebrow">ÁREA RESERVADA</p>
       <h1>Bem-vindo de volta.</h1>
       <p className="auth-subtitle">Inicie sessão para gerir as suas empresas e operações.</p>
