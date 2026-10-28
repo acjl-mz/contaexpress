@@ -2,6 +2,7 @@ import { compare } from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { createSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isLoginRateLimited, recordLoginAttempt } from "@/lib/auth-rate-limit";
 
 export const runtime = "nodejs";
 
@@ -12,6 +13,13 @@ export async function POST(request: NextRequest) {
     const password = typeof body.password === "string" ? body.password : "";
     if (!email || !password || email.length > 254 || password.length > 200) {
       return NextResponse.json({ error: "Introduza o e-mail e a palavra-passe." }, { status: 400 });
+    }
+
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const ip = (forwardedFor?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown").slice(0, 100);
+    const context = { email, ip };
+    if (await isLoginRateLimited(context)) {
+      return NextResponse.json({ error: "Demasiadas tentativas de acesso. Aguarde 15 minutos antes de tentar novamente." }, { status: 429 });
     }
 
     const result = await db.query(
@@ -27,9 +35,11 @@ export async function POST(request: NextRequest) {
     const user = result.rows[0];
     const valid = user ? await compare(password, user.password_hash) : await compare(password, "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy");
     if (!user || !valid) {
+      await recordLoginAttempt(context, false);
       return NextResponse.json({ error: "Credenciais inválidas." }, { status: 401 });
     }
 
+    await recordLoginAttempt(context, true);
     await createSession({
       id: user.id,
       email: user.email,
