@@ -32,7 +32,7 @@
 - [ ] Reconciliação independente dos saldos e testes automatizados dos relatórios.
 
 ## Etapa 4 — Documentos e acompanhamento
-- Arquivo com metadados e acesso controlado.
+- [x] Arquivo com metadados e acesso controlado.
 - Associação de documentos a lançamentos.
 - Tarefas, pendências e estado do fecho mensal.
 
