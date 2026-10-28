@@ -1,4 +1,6 @@
-import { hash } from "bcryptjs";
+import bcrypt from "bcryptjs";
+
+const { hash } = bcrypt;
 import pg from "pg";
 
 const { Pool } = pg;
