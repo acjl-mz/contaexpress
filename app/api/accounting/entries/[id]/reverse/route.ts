@@ -98,7 +98,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
        RETURNING id`,
       [entityId, reversalId, original.description, id],
     );
-    if (lines.rowCount < 2) throw new Error("O lançamento original não contém linhas suficientes para estorno.");
+    if ((lines.rowCount ?? 0) < 2) throw new Error("O lançamento original não contém linhas suficientes para estorno.");
 
     const posted = await client.query("SELECT * FROM post_journal_entry($1, $2)", [reversalId, user.id]);
     await client.query(
