@@ -48,6 +48,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       const access = await client.query("SELECT user_can_access_entity($1, $2) AS allowed", [user.id, close.accounting_entity_id]);
       if (!access.rows[0]?.allowed) { await client.query("ROLLBACK"); return NextResponse.json({ error: "Não tem acesso a esta empresa." }, { status: 403 }); }
       if (close.status === "closed") { await client.query("ROLLBACK"); return NextResponse.json({ error: "Este fecho já foi encerrado." }, { status: 409 }); }
+      const existingItem = await client.query("SELECT is_required FROM accounting_period_close_items WHERE id = $1 AND close_id = $2 FOR UPDATE", [itemId, id]);
+      if (!existingItem.rowCount) { await client.query("ROLLBACK"); return NextResponse.json({ error: "Item da checklist não encontrado." }, { status: 404 }); }
+      if (existingItem.rows[0].is_required && status !== "completed" && status !== "pending") { await client.query("ROLLBACK"); return NextResponse.json({ error: "Um requisito obrigatório só pode ser concluído ou ficar pendente." }, { status: 400 }); }
       const result = await client.query(
         `UPDATE accounting_period_close_items
          SET status = $3, completed_by = CASE WHEN $3 = 'completed' THEN $4::uuid ELSE NULL END,
