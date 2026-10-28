@@ -10,6 +10,7 @@ import {
   ChevronRight,
   CircleDollarSign,
   FileText,
+  FileBarChart2,
   LayoutDashboard,
   Plus,
   ShieldCheck,
@@ -28,6 +29,7 @@ const modules = [
   { name: "Contabilidade", detail: "Plano de contas, diários e lançamentos", icon: BookOpen, state: "MVP" },
   { name: "Documentos", detail: "Arquivo e suporte contabilístico", icon: FileText, state: "MVP" },
   { name: "Tarefas e fecho", detail: "Pendências e acompanhamento mensal", icon: CalendarClock, state: "MVP" },
+  { name: "Relatórios", detail: "Balancete, balanço e resultados", icon: FileBarChart2, state: "MVP" },
   { name: "Tesouraria", detail: "Caixa, bancos e movimentos", icon: Wallet, state: "Planeado" },
 ];
 
@@ -47,6 +49,7 @@ export default function HomePage() {
           <Link className="nav-item" href="/documentos"><FileText size={18} /> Documentos <span className="nav-soon">MVP</span></Link>
           <Link className="nav-item" href="/tarefas"><CalendarClock size={18} /> Tarefas <span className="nav-soon">MVP</span></Link>
           <Link className="nav-item" href="/fecho-mensal"><CheckCircle2 size={18} /> Fecho mensal <span className="nav-soon">MVP</span></Link>
+          <Link className="nav-item" href="/relatorios"><FileBarChart2 size={18} /> Relatórios <span className="nav-soon">MVP</span></Link>
           <a className="nav-item" href="#tesouraria"><Wallet size={18} /> Tesouraria</a>
           <a className="nav-item" href="#fiscalidade"><ShieldCheck size={18} /> Fiscalidade</a>
         </nav>
@@ -87,7 +90,7 @@ export default function HomePage() {
               <div className="module-list" id="empresas">
                 {modules.map((module) => {
                   const Icon = module.icon;
-                  return <a className="module-row" key={module.name} href={module.name === "Contabilidade" ? "/contabilidade" : module.name === "Documentos" ? "/documentos" : module.name === "Tarefas e fecho" ? "/tarefas" : "#"} style={module.name === "Contabilidade" || module.name === "Documentos" || module.name === "Tarefas e fecho" ? { cursor: "pointer" } : undefined}><span className="module-icon"><Icon size={20} /></span><div className="module-info"><strong>{module.name}</strong><span>{module.detail}</span></div><span className={module.state === "Fundação" || module.state === "MVP" ? "state-badge in-progress" : "state-badge"}>{module.state}</span><ChevronRight className="module-chevron" size={17} /></a>;
+                  return <a className="module-row" key={module.name} href={module.name === "Contabilidade" ? "/contabilidade" : module.name === "Documentos" ? "/documentos" : module.name === "Relatórios" ? "/relatorios" : module.name === "Tarefas e fecho" ? "/tarefas" : "#"} style={module.name === "Contabilidade" || module.name === "Documentos" || module.name === "Tarefas e fecho" ? { cursor: "pointer" } : undefined}><span className="module-icon"><Icon size={20} /></span><div className="module-info"><strong>{module.name}</strong><span>{module.detail}</span></div><span className={module.state === "Fundação" || module.state === "MVP" ? "state-badge in-progress" : "state-badge"}>{module.state}</span><ChevronRight className="module-chevron" size={17} /></a>;
                 })}
               </div>
               <div className="panel-footer"><span>Contabilidade e arquivo documental disponíveis no MVP.</span><span className="footer-link">Ver roteiro <ArrowUpRight size={15} /></span></div>
