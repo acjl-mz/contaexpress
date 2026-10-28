@@ -3,7 +3,7 @@
 Plataforma proprietária de gestão contabilística, fiscal e financeira, com foco inicial na operação local da ALINVEST e no mercado moçambicano.
 
 ## Estado
-Fundação do projecto — primeira fase de implementação.
+Fundação e primeira versão do módulo de empresas em desenvolvimento na branch `feature/company-management-auth`. A validação de CI ainda precisa de ser executada.
 
 ## Stack prevista
 - Next.js + TypeScript
