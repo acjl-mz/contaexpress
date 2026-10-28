@@ -5,6 +5,29 @@ import { db } from "@/lib/db";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string; itemId: string }> }) {
+  const user = await getSession();
+  if (!user) return NextResponse.json({ error: "Inicie sessão para continuar." }, { status: 401 });
+  const { id } = await context.params;
+  try {
+    const closeResult = await db.query("SELECT accounting_entity_id FROM accounting_period_closes WHERE id = $1", [id]);
+    if (!closeResult.rowCount) return NextResponse.json({ error: "Fecho mensal não encontrado." }, { status: 404 });
+    const entityId = closeResult.rows[0].accounting_entity_id;
+    const access = await db.query("SELECT user_can_access_entity($1, $2) AS allowed", [user.id, entityId]);
+    if (!access.rows[0]?.allowed) return NextResponse.json({ error: "Não tem acesso a esta empresa." }, { status: 403 });
+    const result = await db.query(
+      `SELECT id, title, description, is_required AS "isRequired", status, sort_order AS "sortOrder",
+              completed_by AS "completedBy", completed_at AS "completedAt"
+       FROM accounting_period_close_items WHERE close_id = $1 ORDER BY sort_order, created_at`,
+      [id],
+    );
+    return NextResponse.json({ items: result.rows });
+  } catch (error) {
+    console.error("Falha ao carregar checklist:", error);
+    return NextResponse.json({ error: "Não foi possível carregar a checklist." }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string; itemId: string }> }) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: "Inicie sessão para continuar." }, { status: 401 });
@@ -15,16 +38,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   try {
     const body = await request.json();
     const status = body.status;
-    if (!["pending", "completed", "not_applicable"].includes(status)) {
-      return NextResponse.json({ error: "Estado da tarefa inválido." }, { status: 400 });
-    }
+    if (!["pending", "completed", "not_applicable"].includes(status)) return NextResponse.json({ error: "Estado da tarefa inválido." }, { status: 400 });
     const client = await db.connect();
     try {
       await client.query("BEGIN");
-      const closeResult = await client.query(
-        "SELECT accounting_entity_id, status FROM accounting_period_closes WHERE id = $1 FOR UPDATE",
-        [id],
-      );
+      const closeResult = await client.query("SELECT accounting_entity_id, status FROM accounting_period_closes WHERE id = $1 FOR UPDATE", [id]);
       if (!closeResult.rowCount) { await client.query("ROLLBACK"); return NextResponse.json({ error: "Fecho mensal não encontrado." }, { status: 404 }); }
       const close = closeResult.rows[0];
       const access = await client.query("SELECT user_can_access_entity($1, $2) AS allowed", [user.id, close.accounting_entity_id]);
@@ -32,8 +50,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       if (close.status === "closed") { await client.query("ROLLBACK"); return NextResponse.json({ error: "Este fecho já foi encerrado." }, { status: 409 }); }
       const result = await client.query(
         `UPDATE accounting_period_close_items
-         SET status = $3,
-             completed_by = CASE WHEN $3 = 'completed' THEN $4::uuid ELSE NULL END,
+         SET status = $3, completed_by = CASE WHEN $3 = 'completed' THEN $4::uuid ELSE NULL END,
              completed_at = CASE WHEN $3 = 'completed' THEN now() ELSE NULL END
          WHERE id = $1 AND close_id = $2
          RETURNING id, title, status, completed_by AS "completedBy", completed_at AS "completedAt"`,
