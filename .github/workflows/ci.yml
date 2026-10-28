@@ -49,7 +49,8 @@ jobs:
             database/migrations/004_entity_access.sql \
             database/migrations/005_reversal_controls.sql \
             database/migrations/006_login_rate_limit.sql \
-            database/migrations/007_accounting_documents.sql
+            database/migrations/007_accounting_documents.sql \
+            database/migrations/008_accounting_tasks.sql
           do
             echo "Applying $migration"
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
