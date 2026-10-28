@@ -10,6 +10,26 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+      SESSION_SECRET: ci-only-test-secret-which-is-long-enough
+      ADMIN_EMAIL: admin@example.test
+      ADMIN_NAME: CI Test Administrator
+      ADMIN_PASSWORD: CI-only-password-long-enough-123
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,12 +39,25 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install
+      - name: Apply database migrations
+        run: |
+          set -euo pipefail
+          for migration in \
+            database/migrations/001_core_schema.sql \
+            database/migrations/002_auth.sql \
+            database/migrations/003_posting_controls.sql \
+            database/migrations/004_entity_access.sql \
+            database/migrations/005_reversal_controls.sql \
+            database/migrations/006_login_rate_limit.sql
+          do
+            echo "Applying $migration"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done
+      - name: Verify administrator bootstrap
+        run: npm run bootstrap:admin
       - name: TypeScript
         run: npm run typecheck
       - name: ESLint
         run: npm run lint
       - name: Production build
         run: npm run build
-        env:
-          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
-          SESSION_SECRET: ci-only-test-secret-which-is-long-enough
