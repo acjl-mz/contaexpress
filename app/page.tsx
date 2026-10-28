@@ -83,7 +83,7 @@ export default function HomePage() {
               <div className="module-list" id="empresas">
                 {modules.map((module) => {
                   const Icon = module.icon;
-                  return <article className="module-row" key={module.name} onClick={module.name === "Contabilidade" ? () => { window.location.href = "/contabilidade"; } : undefined} style={module.name === "Contabilidade" ? { cursor: "pointer" } : undefined}><span className="module-icon"><Icon size={20} /></span><div className="module-info"><strong>{module.name}</strong><span>{module.detail}</span></div><span className={module.state === "Fundação" || module.state === "MVP" ? "state-badge in-progress" : "state-badge"}>{module.state}</span><ChevronRight className="module-chevron" size={17} /></article>;
+                  return <a className="module-row" key={module.name} href={module.name === "Contabilidade" ? "/contabilidade" : "#"} style={module.name === "Contabilidade" ? { cursor: "pointer" } : undefined}><span className="module-icon"><Icon size={20} /></span><div className="module-info"><strong>{module.name}</strong><span>{module.detail}</span></div><span className={module.state === "Fundação" || module.state === "MVP" ? "state-badge in-progress" : "state-badge"}>{module.state}</span><ChevronRight className="module-chevron" size={17} /></a>;
                 })}
               </div>
               <div className="panel-footer"><span>Os módulos serão activados por etapas.</span><span className="footer-link">Ver roteiro <ArrowUpRight size={15} /></span></div>
