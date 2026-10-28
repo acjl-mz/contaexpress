@@ -155,3 +155,26 @@ h2{font-size:17px;margin:0;font-weight:800}
 .spin{animation:spin 1.1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:650px){.auth-card{padding:25px 21px}.companies-topbar{padding:0 15px}.companies-topbar .brand-copy small{display:none}.companies-user>span{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.companies-content{padding:23px 14px}.companies-title-row{align-items:flex-start;flex-direction:column}.companies-title-row .primary-button{width:100%}.company-form-grid{grid-template-columns:1fr;padding:0 14px}.form-field.wide{grid-column:auto}.form-actions{padding:18px 14px 0}.company-table-toolbar{align-items:flex-start;flex-direction:column;padding:16px}.table-actions,.search-field{width:100%}.table-actions .icon-button{flex:0 0 35px}}
+
+
+/* Accounting workspace */
+.accounting-content{padding-bottom:50px}
+.accounting-company-panel{padding:18px 20px;display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:20px}
+.accounting-company-select{display:grid;gap:8px;min-width:260px;flex:1}
+.accounting-company-select label{font-size:11px;font-weight:700;color:#435762}
+.accounting-company-select select{height:42px;max-width:560px;border:1px solid #dce4e8;border-radius:7px;padding:0 12px;background:#fff;color:var(--ink);font:inherit;font-size:12px}
+.accounting-company-meta{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:0 4px 12px}
+.accounting-company-meta span{display:flex;align-items:center;gap:7px;color:#71808c;font-size:11px}
+.accounting-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:20px}
+.accounting-table-panel{margin-bottom:20px;overflow:hidden}
+.accounting-table-panel .company-table-toolbar{padding:19px 20px}
+.accounting-table-panel .company-table th,.accounting-table-panel .company-table td{padding:13px 15px}
+.accounting-table-panel .company-table{min-width:760px}
+.accounting-table-panel .company-table td{font-variant-numeric:tabular-nums}
+.inline-success{display:flex;align-items:center;gap:10px;background:#eaf7ef;color:#287b58;border:1px solid #ccebd7;border-radius:8px;padding:12px 14px;margin-bottom:18px;font-size:11px}
+.accounting-form-note{font-size:10px;line-height:1.6;color:#81909a;margin:15px 20px 0}
+.table-subline{display:block;color:#8d9aa2;font-size:10px;margin-top:5px}
+.table-action-button{display:inline-flex;align-items:center;gap:6px;border:1px solid #cce8d9;border-radius:6px;background:#f0f9f4;color:#207551;padding:7px 9px;font-size:10px;font-weight:700;white-space:nowrap}
+.table-action-button:hover{background:#e0f3e8}
+.compact-empty{min-height:180px}
+@media(max-width:760px){.accounting-stats{grid-template-columns:1fr}.accounting-company-panel{align-items:stretch;flex-direction:column;padding:15px}.accounting-company-select{min-width:0}.accounting-company-select select{max-width:none}.accounting-company-meta{padding-bottom:0}.accounting-table-panel .company-table-toolbar{align-items:flex-start}.accounting-form-note{margin:12px 14px 0}}
