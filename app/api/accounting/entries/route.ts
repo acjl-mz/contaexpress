@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       "SELECT id, starts_on, ends_on, status FROM accounting_periods WHERE id = $1 AND accounting_entity_id = $2",
       [periodId, entityId],
     );
-    if (!period.rowCount || period.rows[0].status !== "open" || entryDate < period.rows[0].starts_on.toISOString().slice(0,10) || entryDate > period.rows[0].ends_on.toISOString().slice(0,10)) {
+    if (!period.rowCount || period.rows[0].status !== "open" || entryDate < String(period.rows[0].starts_on).slice(0, 10) || entryDate > String(period.rows[0].ends_on).slice(0, 10)) {
       await client.query("ROLLBACK");
       return NextResponse.json({ error: "A data não pertence a um período contabilístico aberto." }, { status: 400 });
     }
