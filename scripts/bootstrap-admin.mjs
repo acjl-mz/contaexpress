@@ -1,6 +1,5 @@
 import { hash } from "bcryptjs";
 import pg from "pg";
-import { randomBytes } from "node:crypto";
 
 const { Pool } = pg;
 const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
