@@ -33,14 +33,14 @@ export default function HomePage() {
   return (
     <main className="app-shell">
       <aside className="sidebar">
-        <a className="brand" href="/" aria-label="ContaExpress início">
+        <Link className="brand" href="/" aria-label="ContaExpress início">
           <span className="brand-mark">C<span>.</span></span>
           <span className="brand-copy"><strong>ContaExpress</strong><small>GESTÃO CONTABILÍSTICA</small></span>
         </a>
         <div className="workspace-label">ESPAÇO DE TRABALHO</div>
         <nav className="nav-list" aria-label="Navegação principal">
-          <a className="nav-item active" href="/"><LayoutDashboard size={18} /> Visão geral</a>
-          <a className="nav-item" href="/empresas"><Building2 size={18} /> Empresas <span className="nav-soon">Base</span></a>
+          <Link className="nav-item active" href="/"><LayoutDashboard size={18} /> Visão geral</Link>
+          <a className="nav-item" href="/empresas"><Building2 size={18} /> Empresas <span className="nav-soon">Base</span></Link>
           <a className="nav-item" href="/contabilidade"><BookOpen size={18} /> Contabilidade <span className="nav-soon">MVP</span></a>
           <a className="nav-item" href="#documentos"><FileText size={18} /> Documentos</a>
           <a className="nav-item" href="#tesouraria"><Wallet size={18} /> Tesouraria</a>
