@@ -33,7 +33,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
         return NextResponse.json({ error: "O fecho ou o período contabilístico já está encerrado." }, { status: 409 });
       }
       const pending = await client.query(
-        "SELECT count(*)::int AS count FROM accounting_period_close_items WHERE close_id = $1 AND is_required AND status = 'pending'",
+        "SELECT count(*)::int AS count FROM accounting_period_close_items WHERE close_id = $1 AND is_required AND status <> 'completed'",
         [id],
       );
       if (pending.rows[0].count > 0) {
