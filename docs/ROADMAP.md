@@ -32,7 +32,8 @@
 - [x] API de balanço e demonstração de resultados com filtros de data e cálculo de saldos a partir de lançamentos confirmados.
 - [x] Interface de relatórios com balancete, balanço, demonstração de resultados, diário e razão por conta.
 - [x] Exportação CSV dos relatórios apresentados.
-- [ ] Reconciliação independente dos saldos e testes automatizados dos relatórios.
+- [x] Validação reutilizável de datas e testes unitários para datas impossíveis e intervalos invertidos.
+- [ ] Reconciliação independente dos saldos e testes automatizados dos cálculos dos relatórios.
 
 ## Etapa 4 — Documentos e acompanhamento
 - [x] Arquivo documental com metadados, hash SHA-256 e acesso controlado por empresa.
