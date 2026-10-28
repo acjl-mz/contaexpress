@@ -26,7 +26,7 @@ const metrics = [
 const modules = [
   { name: "Empresas", detail: "Clientes e entidades contabilísticas", icon: Building2, state: "Fundação" },
   { name: "Contabilidade", detail: "Plano de contas, diários e lançamentos", icon: BookOpen, state: "MVP" },
-  { name: "Documentos", detail: "Arquivo e suporte contabilístico", icon: FileText, state: "Planeado" },
+  { name: "Documentos", detail: "Arquivo e suporte contabilístico", icon: FileText, state: "MVP" },
   { name: "Tesouraria", detail: "Caixa, bancos e movimentos", icon: Wallet, state: "Planeado" },
 ];
 
@@ -43,7 +43,7 @@ export default function HomePage() {
           <Link className="nav-item active" href="/"><LayoutDashboard size={18} /> Visão geral</Link>
           <Link className="nav-item" href="/empresas"><Building2 size={18} /> Empresas <span className="nav-soon">Base</span></Link>
           <Link className="nav-item" href="/contabilidade"><BookOpen size={18} /> Contabilidade <span className="nav-soon">MVP</span></Link>
-          <a className="nav-item" href="#documentos"><FileText size={18} /> Documentos</a>
+          <Link className="nav-item" href="/documentos"><FileText size={18} /> Documentos <span className="nav-soon">MVP</span></Link>
           <a className="nav-item" href="#tesouraria"><Wallet size={18} /> Tesouraria</a>
           <a className="nav-item" href="#fiscalidade"><ShieldCheck size={18} /> Fiscalidade</a>
         </nav>
@@ -67,7 +67,7 @@ export default function HomePage() {
 
           <section className="notice" aria-label="Estado da implementação">
             <div className="notice-icon"><ShieldCheck size={20} /></div>
-            <div><strong>Fundação do ContaExpress</strong><p>O acesso seguro e o registo de empresas estão a ser implementados. Os indicadores ainda não representam dados contabilísticos reais.</p></div>
+            <div><strong>Fundação do ContaExpress</strong><p>O acesso, o registo de empresas, os lançamentos e o arquivo documental estão disponíveis no MVP. Os indicadores ainda não representam dados contabilísticos reais.</p></div>
             <span className="notice-tag">MVP em construção</span>
           </section>
 
@@ -84,10 +84,10 @@ export default function HomePage() {
               <div className="module-list" id="empresas">
                 {modules.map((module) => {
                   const Icon = module.icon;
-                  return <a className="module-row" key={module.name} href={module.name === "Contabilidade" ? "/contabilidade" : "#"} style={module.name === "Contabilidade" ? { cursor: "pointer" } : undefined}><span className="module-icon"><Icon size={20} /></span><div className="module-info"><strong>{module.name}</strong><span>{module.detail}</span></div><span className={module.state === "Fundação" || module.state === "MVP" ? "state-badge in-progress" : "state-badge"}>{module.state}</span><ChevronRight className="module-chevron" size={17} /></a>;
+                  return <a className="module-row" key={module.name} href={module.name === "Contabilidade" ? "/contabilidade" : module.name === "Documentos" ? "/documentos" : "#"} style={module.name === "Contabilidade" || module.name === "Documentos" ? { cursor: "pointer" } : undefined}><span className="module-icon"><Icon size={20} /></span><div className="module-info"><strong>{module.name}</strong><span>{module.detail}</span></div><span className={module.state === "Fundação" || module.state === "MVP" ? "state-badge in-progress" : "state-badge"}>{module.state}</span><ChevronRight className="module-chevron" size={17} /></a>;
                 })}
               </div>
-              <div className="panel-footer"><span>Os módulos serão activados por etapas.</span><span className="footer-link">Ver roteiro <ArrowUpRight size={15} /></span></div>
+              <div className="panel-footer"><span>Contabilidade e arquivo documental disponíveis no MVP.</span><span className="footer-link">Ver roteiro <ArrowUpRight size={15} /></span></div>
             </section>
 
             <section className="panel activity-panel">
@@ -98,7 +98,7 @@ export default function HomePage() {
                 <div className="check-item"><span className="check-number">03</span><div><strong>Núcleo contabilístico</strong><p>Plano de contas e lançamentos</p></div></div>
                 <div className="check-item"><span className="check-number">04</span><div><strong>Relatórios e validação</strong><p>Balancetes, auditoria e testes</p></div></div>
               </div>
-              <div className="next-step"><div><span>PRIORIDADE ACTUAL</span><strong>Preparar o módulo de empresas</strong></div><ArrowDownRight size={19} /></div>
+              <div className="next-step"><div><span>PRIORIDADE ACTUAL</span><strong>Validar o arquivo documental</strong></div><ArrowDownRight size={19} /></div>
             </section>
           </div>
           <footer className="page-footer"><span>ContaExpress <span className="footer-separator">·</span> Plataforma proprietária ALINVEST</span><span>Desenvolvido para operação local <span className="footer-separator">·</span> Moçambique</span></footer>
