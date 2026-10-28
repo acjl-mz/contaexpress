@@ -46,7 +46,7 @@ export default function FechoMensalPage(){
  },[router]);
  const loadItems=useCallback(async(closeId:string)=>{
   try{
-   const r=await fetch("/api/accounting/close/"+encodeURIComponent(closeId)+"/items/"+encodeURIComponent("list"));
+   const r=await fetch("/api/accounting/close/"+encodeURIComponent(closeId)+"/items");
    if(r.status===401){router.replace("/login");return;}
    const d=await r.json();if(!r.ok)throw new Error(d.error??"Não foi possível carregar a checklist.");
    setItems(d.items??[]);
@@ -90,7 +90,7 @@ export default function FechoMensalPage(){
  }
  async function logout(){await fetch("/api/auth/logout",{method:"POST"});router.replace("/login");router.refresh();}
  const completed=items.filter(i=>i.status==="completed"||(i.status==="not_applicable"&&!i.isRequired)).length;
- const requiredPending=items.filter(i=>i.isRequired&&i.status==="pending").length;
+ const requiredPending=items.filter(i=>i.isRequired&&i.status!=="completed").length;
  const selectedFresh=selected?periods.find(p=>p.periodId===selected.periodId)??selected:null;
 
  return <main className="companies-shell">
@@ -110,7 +110,7 @@ export default function FechoMensalPage(){
       <div className="panel-heading"><div><p className="eyebrow">CHECKLIST DE ENCERRAMENTO</p><h2>{selected.periodLabel}</h2><p className="close-subtitle">{selected.closeId?"Checklist de controlo mensal":"Ainda não existe uma checklist para este período."}</p></div></div>
       {!selected.closeId?<div className="empty-state"><button className="primary-button" disabled={busy||selected.periodStatus!=="open"} onClick={()=>void prepare(selected)}><ClipboardCheck size={16}/>{busy?"A preparar...":"Preparar checklist"}</button></div>:<>
        <div className="close-progress"><div className="close-progress-label"><span>Progresso da checklist</span><strong>{items.length?Math.round(completed/items.length*100):0}%</strong></div><div className="close-progress-track"><span style={{width:(items.length?completed/items.length*100:0)+"%"}}/></div><small>{completed} de {items.length} itens concluídos · {requiredPending} requisitos obrigatórios pendentes</small></div>
-       <div className="close-checklist">{items.map(item=><article key={item.id} className={"close-check-item "+(item.status==="completed"?"done":"")}><span className="close-check-symbol">{item.status==="completed"?<CheckCircle2 size={18}/>:<ClipboardCheck size={18}/>}</span><div className="close-check-copy"><strong>{item.title}{item.isRequired&&<span className="required-mark">Obrigatório</span>}</strong><p>{item.description}</p></div><select aria-label={"Estado: "+item.title} value={item.status} disabled={selected.closeStatus==="closed"} onChange={e=>void changeItem(item,e.target.value as Item["status"])}><option value="pending">Pendente</option><option value="completed">Concluído</option><option value="not_applicable">Não aplicável</option></select></article>)}</div>
+       <div className="close-checklist">{items.map(item=><article key={item.id} className={"close-check-item "+(item.status==="completed"?"done":"")}><span className="close-check-symbol">{item.status==="completed"?<CheckCircle2 size={18}/>:<ClipboardCheck size={18}/>}</span><div className="close-check-copy"><strong>{item.title}{item.isRequired&&<span className="required-mark">Obrigatório</span>}</strong><p>{item.description}</p></div><select aria-label={"Estado: "+item.title} value={item.status} disabled={selected.closeStatus==="closed"} onChange={e=>void changeItem(item,e.target.value as Item["status"])}><option value="pending">Pendente</option><option value="completed">Concluído</option>{!item.isRequired&&<option value="not_applicable">Não aplicável</option>}</select></article>)}</div>
        {selected.closeStatus!=="closed"&&selected.periodStatus==="open"?<div className="close-finalize"><div className="close-warning"><ShieldCheck size={18}/><span>O encerramento bloqueia novos lançamentos no período. Confirme os documentos e saldos antes de continuar.</span></div><button className="primary-button" disabled={busy||requiredPending>0} onClick={()=>void finalize()}>{busy?"A verificar...":"Validar e encerrar período"}</button></div>:<div className="close-locked"><CheckCircle2 size={18}/> Este período encontra-se encerrado.</div>}
       </>}
      </>}
