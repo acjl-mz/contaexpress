@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, CheckCircle2, CircleAlert, RefreshCw, Settings2, Plus, Send, FileText, Building2, LogOut } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, CircleAlert, RefreshCw, Settings2, Plus, Send, FileText, Building2, LogOut, RotateCcw } from "lucide-react";
 
 type Company = { id: string; legalName: string; taxNumber: string | null; currency: string; status: string };
 type Account = { id: string; code: string; name: string; accountType: string; parentAccountId: string | null; isPostable: boolean; isActive: boolean };
@@ -125,6 +125,29 @@ export default function AccountingPage() {
     finally { setBusy(false); }
   }
 
+  async function reverseEntry(id: string, entryNumber: number | null) {
+    if (!entityId) return;
+    if (!window.confirm(`Vai criar um lançamento inverso para ${entryNumber ? `o lançamento n.º ${entryNumber}` : "este lançamento"}. O original será preservado e marcado como estornado. Continuar?`)) return;
+    const now = new Date();
+    const defaultDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const reversalDate = window.prompt("Data do estorno (AAAA-MM-DD), num período aberto:", defaultDate);
+    if (!reversalDate) return;
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(reversalDate)) { setError("A data deve estar no formato AAAA-MM-DD."); return; }
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const response = await fetch(`/api/accounting/entries/${id}/reverse?entityId=${encodeURIComponent(entityId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reversalDate }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Não foi possível estornar o lançamento.");
+      setNotice(`Estorno criado e confirmado com o número ${data.reversal.entryNumber}.`);
+      await loadAccounting(entityId);
+    } catch (err) { setError(err instanceof Error ? err.message : "Erro ao estornar lançamento."); }
+    finally { setBusy(false); }
+  }
+
   async function logout() { await fetch("/api/auth/logout", { method: "POST" }); router.replace("/login"); router.refresh(); }
 
   const activeAccounts = accounts.filter(account => account.isActive && account.isPostable);
@@ -177,11 +200,11 @@ export default function AccountingPage() {
             <div className="form-actions"><button type="button" className="secondary-button" onClick={()=>setShowEntryForm(false)}>Cancelar</button><button type="submit" className="primary-button" disabled={busy || !periodId || !journalId || !debitAccount || !creditAccount || debitAccount===creditAccount}>{busy ? "A guardar..." : "Guardar rascunho"}</button></div>
             <p className="accounting-form-note">O formulário cria um lançamento simples com duas linhas de igual valor. A confirmação definitiva só é permitida quando o período está aberto, as contas são movimentáveis e os débitos igualam os créditos.</p>
           </form>}
-          <div className="company-table-scroll"><table className="company-table"><thead><tr><th>DATA / N.º</th><th>DESCRIÇÃO</th><th>DIÁRIO / PERÍODO</th><th>DÉBITO</th><th>CRÉDITO</th><th>ESTADO</th><th>ACÇÃO</th></tr></thead><tbody>{entries.map(entry=><tr key={entry.id}><td><strong>{new Date(entry.entryDate).toLocaleDateString("pt-MZ")}</strong><small className="table-subline">{entry.entryNumber ? `N.º ${entry.entryNumber}` : "Sem número"}</small></td><td>{entry.description}{entry.sourceReference && <small className="table-subline">{entry.sourceReference}</small>}</td><td>{entry.journalCode}<small className="table-subline">{entry.periodLabel}</small></td><td>{money(entry.debit)}</td><td>{money(entry.credit)}</td><td><span className={entry.status==="posted" ? "company-status" : "state-badge"}>{entry.status==="posted" ? "Confirmado" : entry.status==="reversed" ? "Estornado" : "Rascunho"}</span></td><td>{entry.status==="draft" ? <button className="table-action-button" disabled={busy} onClick={()=>void postEntry(entry.id)}><Send size={14}/> Confirmar</button> : "—"}</td></tr>)}</tbody></table></div>
+          <div className="company-table-scroll"><table className="company-table"><thead><tr><th>DATA / N.º</th><th>DESCRIÇÃO</th><th>DIÁRIO / PERÍODO</th><th>DÉBITO</th><th>CRÉDITO</th><th>ESTADO</th><th>ACÇÃO</th></tr></thead><tbody>{entries.map(entry=><tr key={entry.id}><td><strong>{new Date(entry.entryDate).toLocaleDateString("pt-MZ")}</strong><small className="table-subline">{entry.entryNumber ? `N.º ${entry.entryNumber}` : "Sem número"}</small></td><td>{entry.description}{entry.sourceReference && <small className="table-subline">{entry.sourceReference}</small>}</td><td>{entry.journalCode}<small className="table-subline">{entry.periodLabel}</small></td><td>{money(entry.debit)}</td><td>{money(entry.credit)}</td><td><span className={entry.status==="posted" ? "company-status" : "state-badge"}>{entry.status==="posted" ? "Confirmado" : entry.status==="reversed" ? "Estornado" : "Rascunho"}</span></td><td>{entry.status==="draft" ? <button className="table-action-button" disabled={busy} onClick={()=>void postEntry(entry.id)}><Send size={14}/> Confirmar</button> : entry.status==="posted" ? <button className="table-action-button" disabled={busy} onClick={()=>void reverseEntry(entry.id, entry.entryNumber)}><RotateCcw size={14}/> Estornar</button> : "—"}</td></tr>)}</tbody></table></div>
           {!entries.length && <div className="empty-state compact-empty"><span className="empty-icon"><FileText size={22}/></span><strong>Ainda não existem lançamentos</strong><p>Crie um rascunho para começar a registar operações.</p></div>}
         </section>
       </>}
-      <p className="companies-footnote">Os saldos e relatórios fiscais ainda não estão implementados. O plano de contas inicial é uma base técnica e não substitui a validação do referencial contabilístico aplicável.</p>
+      <p className="companies-footnote">Os relatórios iniciais estão disponíveis na área de relatórios. O plano de contas é uma base técnica e não substitui a validação do referencial contabilístico aplicável.</p>
     </section>
   </main>;
 }
