@@ -24,7 +24,7 @@ const metrics = [
 
 const modules = [
   { name: "Empresas", detail: "Clientes e entidades contabilísticas", icon: Building2, state: "Fundação" },
-  { name: "Contabilidade", detail: "Plano de contas, diários e lançamentos", icon: BookOpen, state: "Planeado" },
+  { name: "Contabilidade", detail: "Plano de contas, diários e lançamentos", icon: BookOpen, state: "MVP" },
   { name: "Documentos", detail: "Arquivo e suporte contabilístico", icon: FileText, state: "Planeado" },
   { name: "Tesouraria", detail: "Caixa, bancos e movimentos", icon: Wallet, state: "Planeado" },
 ];
@@ -33,15 +33,15 @@ export default function HomePage() {
   return (
     <main className="app-shell">
       <aside className="sidebar">
-        <a className="brand" href="/" aria-label="ContaExpress início">
+        <Link className="brand" href="/" aria-label="ContaExpress início">
           <span className="brand-mark">C<span>.</span></span>
           <span className="brand-copy"><strong>ContaExpress</strong><small>GESTÃO CONTABILÍSTICA</small></span>
-        </a>
+        </Link>
         <div className="workspace-label">ESPAÇO DE TRABALHO</div>
         <nav className="nav-list" aria-label="Navegação principal">
-          <a className="nav-item active" href="/"><LayoutDashboard size={18} /> Visão geral</a>
-          <a className="nav-item" href="#empresas"><Building2 size={18} /> Empresas <span className="nav-soon">Base</span></a>
-          <a className="nav-item" href="#contabilidade"><BookOpen size={18} /> Contabilidade</a>
+          <Link className="nav-item active" href="/"><LayoutDashboard size={18} /> Visão geral</Link>
+          <Link className="nav-item" href="/empresas"><Building2 size={18} /> Empresas <span className="nav-soon">Base</span></Link>
+          <Link className="nav-item" href="/contabilidade"><BookOpen size={18} /> Contabilidade <span className="nav-soon">MVP</span></Link>
           <a className="nav-item" href="#documentos"><FileText size={18} /> Documentos</a>
           <a className="nav-item" href="#tesouraria"><Wallet size={18} /> Tesouraria</a>
           <a className="nav-item" href="#fiscalidade"><ShieldCheck size={18} /> Fiscalidade</a>
@@ -61,12 +61,12 @@ export default function HomePage() {
         <div className="page-content">
           <section className="welcome-row">
             <div><p className="eyebrow">PAINEL DE CONTROLO</p><h1>Gestão clara. Contas sob controlo.</h1><p className="welcome-copy">O ponto de partida para organizar empresas, operações contabilísticas e obrigações num só lugar.</p></div>
-            <button className="primary-button" disabled title="Disponível após implementação do módulo de empresas"><Plus size={17} /> Registar empresa</button>
+            <a className="primary-button" href="/empresas"><Plus size={17} /> Gerir empresas</a>
           </section>
 
           <section className="notice" aria-label="Estado da implementação">
             <div className="notice-icon"><ShieldCheck size={20} /></div>
-            <div><strong>Bem-vindo à fundação do ContaExpress</strong><p>Esta versão prepara a estrutura do sistema. Os indicadores não representam dados reais e as operações contabilísticas ainda não estão activas.</p></div>
+            <div><strong>Fundação do ContaExpress</strong><p>O acesso seguro e o registo de empresas estão a ser implementados. Os indicadores ainda não representam dados contabilísticos reais.</p></div>
             <span className="notice-tag">MVP em construção</span>
           </section>
 
@@ -83,7 +83,7 @@ export default function HomePage() {
               <div className="module-list" id="empresas">
                 {modules.map((module) => {
                   const Icon = module.icon;
-                  return <article className="module-row" key={module.name}><span className="module-icon"><Icon size={20} /></span><div className="module-info"><strong>{module.name}</strong><span>{module.detail}</span></div><span className={module.state === "Fundação" ? "state-badge in-progress" : "state-badge"}>{module.state}</span><ChevronRight className="module-chevron" size={17} /></article>;
+                  return <a className="module-row" key={module.name} href={module.name === "Contabilidade" ? "/contabilidade" : "#"} style={module.name === "Contabilidade" ? { cursor: "pointer" } : undefined}><span className="module-icon"><Icon size={20} /></span><div className="module-info"><strong>{module.name}</strong><span>{module.detail}</span></div><span className={module.state === "Fundação" || module.state === "MVP" ? "state-badge in-progress" : "state-badge"}>{module.state}</span><ChevronRight className="module-chevron" size={17} /></a>;
                 })}
               </div>
               <div className="panel-footer"><span>Os módulos serão activados por etapas.</span><span className="footer-link">Ver roteiro <ArrowUpRight size={15} /></span></div>

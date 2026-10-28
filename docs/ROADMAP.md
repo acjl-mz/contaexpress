@@ -7,18 +7,26 @@
 - Documentação de arquitectura, segurança e execução local.
 
 ## Etapa 2 — Identidade e administração
-- Autenticação de utilizadores.
-- Organizações clientes e entidades contabilísticas.
-- Associação utilizador–empresa e permissões no servidor.
-- Registo de auditoria.
+- [x] Modelo de organizações, entidades e memberships.
+- [x] Início e fim de sessão com cookie HTTP-only assinado.
+- [x] Bootstrap controlado do primeiro administrador.
+- [x] API inicial de registo e listagem de empresas com autorização no servidor.
+- [x] Registo de auditoria para criação de empresa.
+- [ ] Rate limiting e protecção operacional contra tentativas repetidas de login.
+- [ ] Fluxo de convite, recuperação e alteração de palavra-passe.
+- [ ] Testes automatizados de autenticação e isolamento multempresa.
 
 ## Etapa 3 — Núcleo contabilístico
-- Plano de contas configurável.
-- Exercícios e períodos contabilísticos.
-- Diários e lançamentos com múltiplas linhas.
-- Validação de débitos = créditos.
-- Confirmação, estorno e controlo de períodos.
-- Diário, razão e balancete.
+- [x] Estrutura inicial de plano de contas e API de consulta/criação.
+- [x] Inicialização de exercício fiscal, 12 períodos e diário geral.
+- [x] Criação de rascunhos de lançamentos com múltiplas linhas via API.
+- [x] Confirmação de lançamento com validação transaccional de débitos = créditos, período aberto e contas movimentáveis.
+- [x] Bloqueio de alteração e eliminação de lançamentos confirmados através de triggers.
+- [x] Primeira interface para plano de contas e diário geral.
+- [ ] Testes automatizados de integração com PostgreSQL e revisão contabilística do plano de contas.
+- [ ] Fluxo formal de estorno e reconciliação da entrada original.
+- [x] API e interface inicial do razão por conta e balancete de verificação, com filtros por data e exportação CSV.
+- [ ] Relatórios de diário com linhas completas e reconciliação independente dos saldos.
 
 ## Etapa 4 — Documentos e acompanhamento
 - Arquivo com metadados e acesso controlado.
@@ -27,7 +35,8 @@
 
 ## Etapa 5 — Relatórios e robustez
 - Balanço e demonstração de resultados, após validação contabilística.
-- Exportações.
+- [x] Exportação CSV do razão e do balancete.
+- [ ] Exportação PDF com layout imprimível e validação de totais.
 - Testes de isolamento, integridade e permissões.
 - Backups e ensaios de restauração.
 
