@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const to = params.get("to");
   const accountId = params.get("accountId");
   if (!entityId) return NextResponse.json({ error: "Indique a empresa." }, { status: 400 });
-  if (!["trial-balance", "ledger"].includes(report)) return NextResponse.json({ error: "Tipo de relatório inválido." }, { status: 400 });
+  if (!["trial-balance", "ledger", "journal"].includes(report)) return NextResponse.json({ error: "Tipo de relatório inválido." }, { status: 400 });
   if ((from && !validDate(from)) || (to && !validDate(to)) || (from && to && from > to)) {
     return NextResponse.json({ error: "O intervalo de datas é inválido." }, { status: 400 });
   }
@@ -28,6 +28,35 @@ export async function GET(request: NextRequest) {
   try {
     const access = await db.query("SELECT user_can_access_entity($1, $2) AS allowed", [user.id, entityId]);
     if (!access.rows[0]?.allowed) return NextResponse.json({ error: "Não tem acesso a esta empresa." }, { status: 403 });
+
+    if (report === "journal") {
+      const result = await db.query(
+        `SELECT e.id AS "entryId", e.entry_number AS "entryNumber", e.entry_date AS "entryDate",
+                e.description AS "entryDescription", e.source_reference AS "sourceReference",
+                e.status, e.reverses_entry_id AS "reversesEntryId",
+                j.code AS "journalCode", j.name AS "journalName",
+                l.line_number AS "lineNumber", l.description AS "lineDescription",
+                a.code AS "accountCode", a.name AS "accountName",
+                l.debit::numeric(20,2) AS debit, l.credit::numeric(20,2) AS credit
+         FROM journal_entries e
+         JOIN accounting_journals j ON j.id = e.journal_id AND j.accounting_entity_id = e.accounting_entity_id
+         JOIN journal_entry_lines l ON l.entry_id = e.id AND l.accounting_entity_id = e.accounting_entity_id
+         JOIN chart_of_accounts a ON a.id = l.account_id AND a.accounting_entity_id = l.accounting_entity_id
+         WHERE e.accounting_entity_id = $1 AND e.status IN ('posted', 'reversed')
+           AND ($2::date IS NULL OR e.entry_date >= $2::date)
+           AND ($3::date IS NULL OR e.entry_date <= $3::date)
+         ORDER BY e.entry_date, e.entry_number, l.line_number`,
+        [entityId, from, to],
+      );
+      const lines = result.rows.map(row => ({ ...row, debit: Number(row.debit), credit: Number(row.credit) }));
+      return NextResponse.json({
+        report, from, to, lines,
+        totals: {
+          debit: Number(lines.reduce((sum, row) => sum + row.debit, 0).toFixed(2)),
+          credit: Number(lines.reduce((sum, row) => sum + row.credit, 0).toFixed(2)),
+        },
+      });
+    }
 
     if (report === "ledger") {
       const account = await db.query(
@@ -45,20 +74,32 @@ export async function GET(request: NextRequest) {
          FROM journal_entry_lines l
          JOIN journal_entries e ON e.id = l.entry_id AND e.accounting_entity_id = l.accounting_entity_id
          JOIN accounting_journals j ON j.id = e.journal_id AND j.accounting_entity_id = e.accounting_entity_id
-         WHERE l.accounting_entity_id = $1 AND l.account_id = $2 AND e.status = 'posted'
+         WHERE l.accounting_entity_id = $1 AND l.account_id = $2 AND e.status IN ('posted', 'reversed')
            AND ($3::date IS NULL OR e.entry_date >= $3::date)
            AND ($4::date IS NULL OR e.entry_date <= $4::date)
          ORDER BY e.entry_date, e.entry_number, l.line_number`,
         [entityId, accountId, from, to],
       );
       let running = 0;
+      if (from) {
+        const opening = await db.query(
+          `SELECT COALESCE(SUM(l.debit - l.credit), 0)::numeric(20,2) AS balance
+           FROM journal_entry_lines l
+           JOIN journal_entries e ON e.id = l.entry_id AND e.accounting_entity_id = l.accounting_entity_id
+           WHERE l.accounting_entity_id = $1 AND l.account_id = $2
+             AND e.status IN ('posted', 'reversed') AND e.entry_date < $3::date`,
+          [entityId, accountId, from],
+        );
+        running = Number(opening.rows[0]?.balance ?? 0);
+      }
+      const openingBalance = Number(running.toFixed(2));
       const lines = result.rows.map((line) => {
         const debit = Number(line.debit);
         const credit = Number(line.credit);
         running += debit - credit;
         return { ...line, runningBalance: Number(running.toFixed(2)) };
       });
-      return NextResponse.json({ report, account: account.rows[0], from, to, lines, totals: {
+      return NextResponse.json({ report, account: account.rows[0], from, to, openingBalance, lines, totals: {
         debit: Number(lines.reduce((sum, line) => sum + Number(line.debit), 0).toFixed(2)),
         credit: Number(lines.reduce((sum, line) => sum + Number(line.credit), 0).toFixed(2)),
         closingBalance: Number(running.toFixed(2)),
