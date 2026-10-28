@@ -46,6 +46,7 @@ export default function HomePage() {
           <Link className="nav-item" href="/contabilidade"><BookOpen size={18} /> Contabilidade <span className="nav-soon">MVP</span></Link>
           <Link className="nav-item" href="/documentos"><FileText size={18} /> Documentos <span className="nav-soon">MVP</span></Link>
           <Link className="nav-item" href="/tarefas"><CalendarClock size={18} /> Tarefas <span className="nav-soon">MVP</span></Link>
+          <Link className="nav-item" href="/fecho-mensal"><CheckCircle2 size={18} /> Fecho mensal <span className="nav-soon">MVP</span></Link>
           <a className="nav-item" href="#tesouraria"><Wallet size={18} /> Tesouraria</a>
           <a className="nav-item" href="#fiscalidade"><ShieldCheck size={18} /> Fiscalidade</a>
         </nav>
