@@ -186,3 +186,25 @@ h2{font-size:17px;margin:0;font-weight:800}
 .accounting-report-filters .form-actions{padding:18px 0 0;margin-top:18px;border-top:1px solid #edf1f3}
 .accounting-table-panel .company-table tfoot th{background:#f6f9fa;color:#334b57;font-weight:800;border-top:1px solid #dfe7eb}
 @media(max-width:760px){.accounting-header-actions{width:100%}.accounting-header-actions>*{flex:1;justify-content:center}.accounting-report-filters{padding:14px}}
+
+
+/* Accounting document archive */
+.accounting-document-layout{display:grid;grid-template-columns:minmax(290px,.75fr) minmax(0,1.25fr);gap:18px;align-items:start}
+.accounting-document-upload,.accounting-document-list{min-width:0}
+.document-upload-form{display:grid;gap:16px;padding:0 20px 20px}
+.document-upload-form .form-field small{display:block;margin-top:6px;color:#82909a;font-size:11px;line-height:1.5}
+.document-upload-form input[type=file]{width:100%;min-width:0;font-size:12px;padding:10px}
+.document-upload-form textarea{resize:vertical;min-height:82px}
+.document-security-note{display:flex;align-items:flex-start;gap:9px;padding:13px 18px;background:#f5faf7;border-top:1px solid #e5eee8;color:#638070;font-size:11px;line-height:1.6}
+.document-security-note svg{flex:0 0 auto;color:var(--green)}
+.document-list{padding:0 18px}
+.document-row{display:flex;align-items:flex-start;gap:12px;padding:16px 0;border-bottom:1px solid #edf0f2;min-width:0}
+.document-row:last-child{border-bottom:0}
+.document-file-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;background:#f0f6f3;border-radius:9px;color:var(--green)}
+.document-info{display:grid;gap:5px;min-width:0;flex:1}
+.document-info strong{font-size:12px;overflow-wrap:anywhere}
+.document-info>span,.document-info small{font-size:10px;color:#84919a;line-height:1.5;overflow-wrap:anywhere}
+.document-info p{font-size:11px;color:#657681;line-height:1.5;margin:0;overflow-wrap:anywhere}
+.document-download{flex:0 0 34px}
+@media(max-width:950px){.accounting-document-layout{grid-template-columns:1fr}}
+@media(max-width:680px){.document-upload-form{padding:0 14px 16px}.document-list{padding:0 13px}.document-row{gap:9px}.document-file-icon{height:34px;width:34px;flex-basis:34px}.document-info strong{font-size:11px}.document-info>span,.document-info small{font-size:9px}.document-download{height:31px;width:31px;flex-basis:31px}}
