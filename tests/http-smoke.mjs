@@ -97,7 +97,7 @@ try {
     headers: { cookie: sessionCookie },
   });
   assert.equal(pdfResponse.status, 200, "exportação PDF deve funcionar para uma empresa autorizada");
-  assert.match(pdfResponse.headers.get("content-type") || "", /application\\/pdf/i);
+  assert.ok((pdfResponse.headers.get("content-type") || "").includes("application/pdf"), "resposta deve indicar content-type PDF");
   const pdfBytes = Buffer.from(await pdfResponse.arrayBuffer());
   assert.ok(pdfBytes.subarray(0, 8).toString("ascii").startsWith("%PDF-1."), "download deve conter um documento PDF válido");
 
