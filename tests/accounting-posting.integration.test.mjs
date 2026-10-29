@@ -4,6 +4,19 @@ import pg from "pg";
 
 const { Client } = pg;
 
+async function expectQueryError(client, sql, params, pattern) {
+  await client.query("SAVEPOINT expected_failure");
+  try {
+    await client.query(sql, params);
+    assert.fail("Expected PostgreSQL query to fail.");
+  } catch (error) {
+    await client.query("ROLLBACK TO SAVEPOINT expected_failure");
+    assert.match(String(error.message), pattern);
+  } finally {
+    await client.query("RELEASE SAVEPOINT expected_failure");
+  }
+}
+
 test("PostgreSQL posting controls enforce balanced entries and immutable posted lines", async (t) => {
   if (!process.env.DATABASE_URL) {
     t.skip("DATABASE_URL is required for PostgreSQL integration tests");
@@ -65,12 +78,16 @@ test("PostgreSQL posting controls enforce balanced entries and immutable posted 
     assert.equal(Number(posted.rows[0].assigned_number), 1);
     assert.equal((await client.query("SELECT status FROM journal_entries WHERE id = $1", [balancedEntry])).rows[0].status, "posted");
 
-    await assert.rejects(
-      client.query("UPDATE journal_entry_lines SET debit = 900 WHERE entry_id = $1 AND line_number = 1", [balancedEntry]),
+    await expectQueryError(
+      client,
+      "UPDATE journal_entry_lines SET debit = 900 WHERE entry_id = $1 AND line_number = 1",
+      [balancedEntry],
       /Não é permitido alterar linhas de um lançamento confirmado/,
     );
-    await assert.rejects(
-      client.query("DELETE FROM journal_entries WHERE id = $1", [balancedEntry]),
+    await expectQueryError(
+      client,
+      "DELETE FROM journal_entries WHERE id = $1",
+      [balancedEntry],
       /Não é permitido apagar um lançamento confirmado/,
     );
 
@@ -82,8 +99,10 @@ test("PostgreSQL posting controls enforce balanced entries and immutable posted 
       "INSERT INTO journal_entry_lines (accounting_entity_id, entry_id, line_number, account_id, debit, credit) VALUES ($1, $2, 1, $3, 1000, 0), ($1, $2, 2, $4, 0, 900)",
       [entity, unbalancedEntry, asset, equity],
     );
-    await assert.rejects(
-      client.query("SELECT * FROM post_journal_entry($1, $2)", [unbalancedEntry, user]),
+    await expectQueryError(
+      client,
+      "SELECT * FROM post_journal_entry($1, $2)",
+      [unbalancedEntry, user],
       /O total de débitos deve ser igual ao total de créditos/,
     );
     assert.equal((await client.query("SELECT status FROM journal_entries WHERE id = $1", [unbalancedEntry])).rows[0].status, "draft");
