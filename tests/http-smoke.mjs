@@ -51,6 +51,20 @@ try {
     body: JSON.stringify({ email: "", password: "" }),
   });
   assert.equal(missingCredentials.status, 400, "login deve rejeitar credenciais vazias");
+  const resetUnknown = await fetch(`${baseUrl}/api/auth/password-reset`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email: `unknown-${Date.now()}@example.test` }),
+  });
+  assert.equal(resetUnknown.status, 200, "pedido de recuperação deve responder sem revelar se o e-mail existe");
+  const resetMessage = await resetUnknown.json();
+  assert.match(resetMessage.message, /Se existir uma conta/i);
+  const invalidReset = await fetch(`${baseUrl}/api/auth/password-reset/confirm`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ token: "a".repeat(64), password: "CI-password-test-long-enough-123" }),
+  });
+  assert.equal(invalidReset.status, 400, "token de recuperação inexistente deve ser rejeitado");
 
   const invalidCredentials = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",
