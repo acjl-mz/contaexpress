@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS bank_statement_lines (
   accounting_entity_id UUID NOT NULL,
   import_id UUID NOT NULL,
   treasury_account_id UUID NOT NULL,
+  line_number INTEGER NOT NULL CHECK (line_number BETWEEN 1 AND 1000),
   line_date DATE NOT NULL,
   description TEXT NOT NULL CHECK (length(trim(description)) BETWEEN 1 AND 240),
   direction TEXT NOT NULL CHECK (direction IN ('inflow','outflow')),
@@ -41,6 +42,18 @@ CREATE TABLE IF NOT EXISTS bank_statement_lines (
   CHECK ((status = 'matched' AND treasury_transaction_id IS NOT NULL AND matched_at IS NOT NULL)
       OR (status <> 'matched' AND treasury_transaction_id IS NULL AND matched_at IS NULL))
 );
+-- Backfill line numbers for installations that applied an earlier version of this migration.
+ALTER TABLE bank_statement_lines ADD COLUMN IF NOT EXISTS line_number INTEGER;
+WITH numbered AS (
+  SELECT id, row_number() OVER (PARTITION BY import_id ORDER BY created_at, id)::INTEGER AS n
+  FROM bank_statement_lines WHERE line_number IS NULL
+)
+UPDATE bank_statement_lines l SET line_number = numbered.n
+FROM numbered WHERE l.id = numbered.id;
+ALTER TABLE bank_statement_lines ALTER COLUMN line_number SET NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS bank_statement_lines_import_line_unique
+  ON bank_statement_lines(import_id, line_number);
+
 CREATE UNIQUE INDEX IF NOT EXISTS bank_statement_lines_transaction_unique
   ON bank_statement_lines(accounting_entity_id, treasury_transaction_id)
   WHERE treasury_transaction_id IS NOT NULL;
