@@ -16,7 +16,7 @@
 - [x] Teste HTTP de rate limiting: após oito tentativas falhadas para o mesmo e-mail, novas tentativas são limitadas com HTTP 429.
 - [ ] Testes concorrentes do rate limiting e limitação distribuída sob múltiplas instâncias.
 - [x] Fluxo de pedido e confirmação de recuperação de palavra-passe com token de uso único, expiração de 30 minutos e invalidação de sessões anteriores (migração 010).
-- [ ] Fluxo de convite de utilizadores com associação segura à organização.
+- [x] Fluxo de convite de utilizadores com token aleatório de uso único, expiração em 48 horas, e-mail de convite, criação da conta com palavra-passe definida pelo convidado, associação à organização, controlo de perfil, auditoria e página de aceitação. Não permite convidar superadministradores nem associar contas existentes.
 - [x] Alteração autenticada da palavra-passe com confirmação da credencial actual, invalidação das outras sessões e links de recuperação pendentes, auditoria e teste HTTP ponta a ponta.
 - [x] Teste de integração PostgreSQL para isolamento multempresa e concessão/revogação de acesso explícito por entidade.
 - [x] Teste de integração PostgreSQL para impedir confirmação por auditores e validar numeração sequencial por diário.
