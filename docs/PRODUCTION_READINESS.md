@@ -6,7 +6,7 @@ Este documento é um controlo operacional. A conclusão do CI não substitui a v
 - [ ] Configurar domínio definitivo e HTTPS.
 - [ ] Definir `SESSION_SECRET` aleatório com pelo menos 32 caracteres e guardá-lo num gestor de segredos.
 - [ ] Configurar `DATABASE_URL` para a base de produção e validar TLS com `DATABASE_SSL=true` quando aplicável.
-- [ ] Aplicar as migrações 001–014 pela ordem documentada e guardar o registo da versão aplicada.
+- [ ] Aplicar as migrações 001–015 pela ordem documentada e guardar o registo da versão aplicada.
 - [ ] Confirmar que o bootstrap de administrador não está exposto como endpoint público e que as credenciais iniciais não são reutilizadas.
 - [ ] Configurar `APP_BASE_URL`, `RESEND_API_KEY` e `RESEND_FROM_EMAIL`; validar entrega, domínio autenticado e tratamento de falhas de e-mail.
 - [ ] Rever a origem confiável dos cabeçalhos de IP no proxy. Não aceitar `X-Forwarded-For` arbitrário de clientes directos.
