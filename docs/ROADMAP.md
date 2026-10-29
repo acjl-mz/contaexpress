@@ -15,7 +15,8 @@
 - [x] Rate limiting inicial para tentativas repetidas de login por e-mail e IP (requer migração 006).
 - [ ] Testes automatizados de segurança e concorrência para o rate limiting.
 - [ ] Fluxo de convite, recuperação e alteração de palavra-passe.
-- [ ] Testes automatizados de autenticação e isolamento multempresa.
+- [x] Teste de integração PostgreSQL para isolamento multempresa e concessão/revogação de acesso explícito por entidade.
+- [ ] Testes HTTP de autenticação, permissões por função e isolamento multempresa.
 
 ## Etapa 3 — Núcleo contabilístico
 - [x] Estrutura inicial de plano de contas e API de consulta/criação.
