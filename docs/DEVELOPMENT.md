@@ -95,3 +95,14 @@ Estas instruções descrevem a configuração prevista; os comandos deverão ser
 - Limites actuais: 5 MB por ficheiro e 1.000 linhas por importação. A importação guarda o ficheiro, as linhas e um evento de auditoria; não cria movimentos de tesouraria automaticamente.
 - O sistema sugere movimentos da mesma conta com o mesmo valor e sentido, até três dias de diferença e sem conflito de referência. A confirmação é manual, transaccional e impede que um movimento seja associado a duas linhas.
 - Linhas sem correspondência permanecem pendentes para investigação. Não se devem reconciliar divergências apenas para limpar a lista.
+
+
+## Validação ponta a ponta da reconciliação bancária
+O teste HTTP integrado em `tests/http-smoke.mjs` cria uma conta bancária e movimentos de teste, importa um extracto com duas linhas e verifica:
+- rejeição de acesso e importação entre empresas;
+- rejeição de datas impossíveis com HTTP 400;
+- persistência e ordenação das linhas importadas;
+- rejeição de uma correspondência com diferença de valor;
+- confirmação de uma correspondência válida e alteração de estado do movimento;
+- rejeição de uma segunda tentativa de reconciliar a mesma linha.
+A migração 013 atribui números de linha estáveis e únicos dentro de cada importação. A pipeline CI deve executar as migrações, testes de integração, TypeScript, ESLint, build de produção, testes HTTP e ensaio de restauração de backup antes de considerar a fase validada.
