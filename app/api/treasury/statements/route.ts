@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
             AND tx.treasury_account_id=l.treasury_account_id
             AND tx.status='recorded' AND tx.direction=l.direction AND tx.amount=l.amount
             AND abs(tx.transaction_date-l.line_date)<=3
+            AND NOT EXISTS (SELECT 1 FROM bank_statement_lines linked WHERE linked.accounting_entity_id=tx.accounting_entity_id AND linked.treasury_transaction_id=tx.id)
             AND (l.reference IS NULL OR tx.reference IS NULL OR tx.reference=l.reference)
           ORDER BY (tx.reference=l.reference) DESC NULLS LAST, abs(tx.transaction_date-l.line_date)
           LIMIT 5
