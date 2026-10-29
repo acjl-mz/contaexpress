@@ -11,9 +11,13 @@ if [[ "${RESTORE_CONFIRM:-}" != "YES_RESTORE_DATABASE" ]]; then
   echo "Restauro recusado. Defina RESTORE_CONFIRM=YES_RESTORE_DATABASE depois de confirmar o destino." >&2
   exit 2
 fi
-if [[ -n "${DATABASE_URL:-}" && "$RESTORE_DATABASE_URL" == "$DATABASE_URL" ]]; then
-  echo "Restauro recusado: o destino coincide com DATABASE_URL." >&2
-  exit 2
+if [[ -n "${DATABASE_URL:-}" ]]; then
+  source_identity="$(psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "SELECT current_database() || '|' || COALESCE(inet_server_addr()::text, 'local') || '|' || COALESCE(inet_server_port()::text, 'local')")"
+  target_identity="$(psql "$RESTORE_DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "SELECT current_database() || '|' || COALESCE(inet_server_addr()::text, 'local') || '|' || COALESCE(inet_server_port()::text, 'local')")"
+  if [[ "$source_identity" == "$target_identity" ]]; then
+    echo "Restauro recusado: o destino é a mesma base de dados de origem." >&2
+    exit 2
+  fi
 fi
 if [[ ! -f "$backup_file.sha256" ]]; then
   echo "Checksum ausente: esperado $backup_file.sha256" >&2
