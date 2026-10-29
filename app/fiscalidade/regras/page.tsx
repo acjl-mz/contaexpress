@@ -45,6 +45,7 @@ export default function TaxRulesPage() {
   const router = useRouter();
   const [rules, setRules] = useState<TaxRule[]>([]);
   const [role, setRole] = useState("");
+  const [canManageRules, setCanManageRules] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -82,6 +83,7 @@ export default function TaxRulesPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Não foi possível carregar as regras fiscais.");
       setRules(data.rules ?? []);
+      setCanManageRules(Boolean(data.permissions?.canManage));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao carregar o registo fiscal.");
     } finally {
@@ -151,8 +153,8 @@ export default function TaxRulesPage() {
     }
   }
 
-  const canReview = role === "superadmin" || role === "tax_officer";
-  const canActivate = role === "superadmin";
+  const canReview = canManageRules && (role === "superadmin" || role === "tax_officer");
+  const canActivate = canManageRules && role === "superadmin";
 
   return <main className="companies-shell">
     <header className="companies-topbar">
@@ -163,13 +165,14 @@ export default function TaxRulesPage() {
       <div className="breadcrumb"><Link href="/">Espaço de trabalho</Link><span>›</span><Link href="/fiscalidade">Fiscalidade</Link><span>›</span><strong>Regras fiscais</strong></div>
       <div className="companies-title-row">
         <div><p className="eyebrow">REGISTO NORMATIVO E VERSIONAMENTO</p><h1>Regras fiscais</h1><p className="welcome-copy">Registe a fonte legal, a vigência e o método de cálculo. Nenhuma taxa é pré-carregada ou activada automaticamente.</p></div>
-        <button className="primary-button" onClick={() => setShowCreate(v => !v)}><Plus size={16}/>{showCreate ? "Fechar formulário" : "Nova versão"}</button>
+        {canManageRules && <button className="primary-button" onClick={() => setShowCreate(v => !v)}><Plus size={16}/>{showCreate ? "Fechar formulário" : "Nova versão"}</button>}
       </div>
       {error && <div className="inline-error" role="alert"><CircleAlert size={17}/>{error}</div>}
       {notice && <div className="notice"><CheckCircle2 size={18}/>{notice}</div>}
+      {!loading && !canManageRules && <div className="notice"><div className="notice-icon"><ShieldCheck size={20}/></div><div><strong>Registo global em modo de consulta</strong><p>Gerir, rever ou activar regras exige autorização explícita de administração da plataforma. A função de superadministrador de uma empresa, por si só, não concede esse acesso.</p></div><span className="notice-tag">Consulta</span></div>}
       <div className="notice"><div className="notice-icon"><ShieldCheck size={20}/></div><div><strong>Controlo de utilização</strong><p>Uma regra só pode ser usada numa simulação após validação da fonte, revisão por outra pessoa, aprovação e activação. A simulação não cria lançamentos nem declarações fiscais.</p></div><span className="notice-tag">Sem taxas por defeito</span></div>
 
-      {showCreate && <form className="company-form panel" onSubmit={createRule}>
+      {showCreate && canManageRules && <form className="company-form panel" onSubmit={createRule}>
         <div className="panel-heading"><div><p className="eyebrow">NOVA VERSÃO EM RASCUNHO</p><h2>Dados da regra</h2></div></div>
         <div className="company-form-grid">
           <div className="form-field"><label htmlFor="ruleKey">Chave estável *</label><input id="ruleKey" required minLength={3} maxLength={80} pattern="[a-z][a-z0-9._-]{2,79}" value={ruleKey} onChange={e=>setRuleKey(e.target.value.toLowerCase())} placeholder="ex.: iva.regime-geral"/></div>
