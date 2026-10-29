@@ -166,6 +166,71 @@ try {
 
   const adminEntity = companyPayload.company.id;
   fixtureIds.adminEntity = adminEntity;
+
+  // End-to-end bank reconciliation: import, match, duplicate protection, mismatch and tenant isolation.
+  const bankAccount = (await fixtureClient.query(
+    "INSERT INTO treasury_accounts (accounting_entity_id,name,account_type,currency,created_by) VALUES ($1,'HTTP Test Bank','bank','MZN',$2) RETURNING id",
+    [adminEntity,payload.user.id],
+  )).rows[0].id;
+  const matchingTransaction = (await fixtureClient.query(
+    "INSERT INTO treasury_transactions (accounting_entity_id,treasury_account_id,transaction_date,direction,category,description,amount,reference,status,created_by) VALUES ($1,$2,'2026-10-20','inflow','customer_receipt','HTTP matching receipt',2500,'BANK-REF-001','recorded',$3) RETURNING id",
+    [adminEntity,bankAccount,payload.user.id],
+  )).rows[0].id;
+  const wrongAmountTransaction = (await fixtureClient.query(
+    "INSERT INTO treasury_transactions (accounting_entity_id,treasury_account_id,transaction_date,direction,category,description,amount,reference,status,created_by) VALUES ($1,$2,'2026-10-20','outflow','fee','HTTP bank fee',75,'FEE-REF-001','recorded',$3) RETURNING id",
+    [adminEntity,bankAccount,payload.user.id],
+  )).rows[0].id;
+
+  const crossTenantStatements = await fetch(baseUrl + "/api/treasury/statements?entityId=" + encodeURIComponent(fixtureIds.entity), { headers: { cookie: sessionCookie } });
+  assert.equal(crossTenantStatements.status, 403, "extractos de outra entidade não devem ser consultáveis");
+  const crossTenantImport = await fetch(baseUrl + "/api/treasury/statements", {
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"import",entityId:fixtureIds.entity,accountId:bankAccount,fileName:"cross-tenant.csv",rows:[{date:"2026-10-20",description:"Tentativa",amount:1,direction:"inflow"}]}),
+  });
+  assert.equal(crossTenantImport.status,403,"a importação não deve permitir usar uma conta de outra entidade");
+
+  const invalidStatementDate = await fetch(baseUrl + "/api/treasury/statements", {
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"import",entityId:adminEntity,accountId:bankAccount,fileName:"invalid-date.csv",rows:[{date:"2026-02-31",description:"Data impossível",amount:10,direction:"inflow"}]}),
+  });
+  assert.equal(invalidStatementDate.status,400,"datas impossíveis devem ser rejeitadas como erro de validação");
+
+  const statementImport = await fetch(baseUrl + "/api/treasury/statements", {
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"import",entityId:adminEntity,accountId:bankAccount,fileName:"http-statement.csv",rows:[
+      {date:"2026-10-20",description:"Recebimento de cliente",amount:2500,direction:"inflow",reference:"BANK-REF-001"},
+      {date:"2026-10-20",description:"Comissão bancária",amount:70,direction:"outflow",reference:"FEE-REF-001"},
+    ]}),
+  });
+  assert.equal(statementImport.status,201,"extracto válido deve ser importado");
+  const statementImportPayload=await statementImport.json();
+  const statementRows=await fixtureClient.query("SELECT id,line_number,amount FROM bank_statement_lines WHERE accounting_entity_id=$1 AND import_id=$2 ORDER BY line_number",[adminEntity,statementImportPayload.importId]);
+  assert.equal(statementRows.rowCount,2,"a importação deve persistir todas as linhas");
+  assert.deepEqual(statementRows.rows.map(r=>r.line_number),[1,2],"as linhas do extracto devem manter a sua ordem");
+  const matchedLine=statementRows.rows[0].id;
+  const mismatchLine=statementRows.rows[1].id;
+
+  const amountMismatch=await fetch(baseUrl + "/api/treasury/statements",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"match",entityId:adminEntity,lineId:mismatchLine,transactionId:wrongAmountTransaction}),
+  });
+  assert.equal(amountMismatch.status,422,"a reconciliação deve rejeitar diferenças de valor não justificadas");
+  const firstMatch=await fetch(baseUrl + "/api/treasury/statements",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"match",entityId:adminEntity,lineId:matchedLine,transactionId:matchingTransaction}),
+  });
+  assert.equal(firstMatch.status,200,"a correspondência exacta deve ser confirmada");
+  const repeatedLineMatch=await fetch(baseUrl + "/api/treasury/statements",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"match",entityId:adminEntity,lineId:matchedLine,transactionId:matchingTransaction}),
+  });
+  assert.equal(repeatedLineMatch.status,409,"uma linha já reconciliada não deve ser reconciliada novamente");
+  const transactionStatus=await fixtureClient.query("SELECT status FROM treasury_transactions WHERE accounting_entity_id=$1 AND id=$2",[adminEntity,matchingTransaction]);
+  assert.equal(transactionStatus.rows[0].status,"reconciled","o movimento associado deve ficar reconciliado");
+  const statementStatus=await fixtureClient.query("SELECT status,treasury_transaction_id FROM bank_statement_lines WHERE accounting_entity_id=$1 AND id=$2",[adminEntity,matchedLine]);
+  assert.equal(statementStatus.rows[0].status,"matched","a linha do extracto deve ficar marcada como correspondida");
+  assert.equal(statementStatus.rows[0].treasury_transaction_id,matchingTransaction,"a correspondência deve manter a referência do movimento");
+
   const adminYear = (await fixtureClient.query("INSERT INTO fiscal_years (accounting_entity_id, label, starts_on, ends_on) VALUES ($1, 'HTTP-REVERSAL', '2026-01-01', '2026-12-31') RETURNING id", [adminEntity])).rows[0].id;
   const adminPeriod = (await fixtureClient.query("INSERT INTO accounting_periods (accounting_entity_id, fiscal_year_id, label, starts_on, ends_on) VALUES ($1, $2, 'HTTP-REVERSAL', '2026-01-01', '2026-12-31') RETURNING id", [adminEntity, adminYear])).rows[0].id;
   const adminJournal = (await fixtureClient.query("INSERT INTO accounting_journals (accounting_entity_id, code, name) VALUES ($1, 'HTTPREV', 'HTTP reversal test') RETURNING id", [adminEntity])).rows[0].id;
@@ -229,7 +294,11 @@ try {
       await fixtureClient.query("DELETE FROM app_users WHERE id = $1", [f.user]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM organisations WHERE id = $1", [f.org]).catch(() => undefined);
       if (f.adminEntity) {
-        await fixtureClient.query("DELETE FROM journal_entry_lines WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM bank_statement_lines WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM bank_statement_imports WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM treasury_transactions WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM treasury_accounts WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM journal_entry_lines WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
         await fixtureClient.query("DELETE FROM journal_entries WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
         await fixtureClient.query("DELETE FROM audit_events WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
         await fixtureClient.query("DELETE FROM chart_of_accounts WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
