@@ -15,6 +15,7 @@ import {
   Plus,
   ShieldCheck,
   Wallet,
+  ShieldCheck,
 } from "lucide-react";
 
 const metrics = [
@@ -30,7 +31,8 @@ const modules = [
   { name: "Documentos", detail: "Arquivo e suporte contabilístico", icon: FileText, state: "MVP" },
   { name: "Tarefas e fecho", detail: "Pendências e acompanhamento mensal", icon: CalendarClock, state: "MVP" },
   { name: "Relatórios", detail: "Balancete, balanço e resultados", icon: FileBarChart2, state: "MVP" },
-  { name: "Tesouraria", detail: "Caixa, bancos e movimentos", icon: Wallet, state: "Planeado" },
+  { name: "Tesouraria", detail: "Caixa, bancos e movimentos", icon: Wallet, state: "MVP" },
+  { name: "Fiscalidade", detail: "Obrigações fiscais e calendário", icon: ShieldCheck, state: "MVP" },
 ];
 
 export default function HomePage() {
@@ -50,8 +52,8 @@ export default function HomePage() {
           <Link className="nav-item" href="/tarefas"><CalendarClock size={18} /> Tarefas <span className="nav-soon">MVP</span></Link>
           <Link className="nav-item" href="/fecho-mensal"><CheckCircle2 size={18} /> Fecho mensal <span className="nav-soon">MVP</span></Link>
           <Link className="nav-item" href="/relatorios"><FileBarChart2 size={18} /> Relatórios <span className="nav-soon">MVP</span></Link>
-          <a className="nav-item" href="#tesouraria"><Wallet size={18} /> Tesouraria</a>
-          <a className="nav-item" href="#fiscalidade"><ShieldCheck size={18} /> Fiscalidade</a>
+          <Link className="nav-item" href="/tesouraria"><Wallet size={18} /> Tesouraria <span className="nav-soon">MVP</span></Link>
+          <Link className="nav-item" href="/fiscalidade"><ShieldCheck size={18} /> Fiscalidade <span className="nav-soon">MVP</span></Link>
         </nav>
         <div className="sidebar-bottom">
           <div className="local-status"><span className="status-dot" /><div><strong>Instalação local</strong><small>Ambiente de desenvolvimento</small></div></div>
@@ -86,11 +88,11 @@ export default function HomePage() {
 
           <div className="content-grid">
             <section className="panel modules-panel">
-              <div className="panel-heading"><div><p className="eyebrow">ESTRUTURA DO PRODUTO</p><h2>Módulos do sistema</h2></div><span className="muted-count">05 áreas</span></div>
+              <div className="panel-heading"><div><p className="eyebrow">ESTRUTURA DO PRODUTO</p><h2>Módulos do sistema</h2></div><span className="muted-count">07 áreas</span></div>
               <div className="module-list" id="empresas">
                 {modules.map((module) => {
                   const Icon = module.icon;
-                  return <a className="module-row" key={module.name} href={module.name === "Contabilidade" ? "/contabilidade" : module.name === "Documentos" ? "/documentos" : module.name === "Relatórios" ? "/relatorios" : module.name === "Tarefas e fecho" ? "/tarefas" : "#"} style={module.name === "Contabilidade" || module.name === "Documentos" || module.name === "Tarefas e fecho" ? { cursor: "pointer" } : undefined}><span className="module-icon"><Icon size={20} /></span><div className="module-info"><strong>{module.name}</strong><span>{module.detail}</span></div><span className={module.state === "Fundação" || module.state === "MVP" ? "state-badge in-progress" : "state-badge"}>{module.state}</span><ChevronRight className="module-chevron" size={17} /></a>;
+                  return <a className="module-row" key={module.name} href={module.name === "Contabilidade" ? "/contabilidade" : module.name === "Documentos" ? "/documentos" : module.name === "Relatórios" ? "/relatorios" : module.name === "Tarefas e fecho" ? "/tarefas" : module.name === "Tesouraria" ? "/tesouraria" : module.name === "Fiscalidade" ? "/fiscalidade" : "#"} style={module.name === "Contabilidade" || module.name === "Documentos" || module.name === "Tarefas e fecho" || module.name === "Tesouraria" || module.name === "Fiscalidade" ? { cursor: "pointer" } : undefined}><span className="module-icon"><Icon size={20} /></span><div className="module-info"><strong>{module.name}</strong><span>{module.detail}</span></div><span className={module.state === "Fundação" || module.state === "MVP" ? "state-badge in-progress" : "state-badge"}>{module.state}</span><ChevronRight className="module-chevron" size={17} /></a>;
                 })}
               </div>
               <div className="panel-footer"><span>Contabilidade e arquivo documental disponíveis no MVP.</span><span className="footer-link">Ver roteiro <ArrowUpRight size={15} /></span></div>
@@ -104,7 +106,7 @@ export default function HomePage() {
                 <div className="check-item"><span className="check-number">03</span><div><strong>Núcleo contabilístico</strong><p>Plano de contas e lançamentos</p></div></div>
                 <div className="check-item"><span className="check-number">04</span><div><strong>Relatórios e validação</strong><p>Balancetes, auditoria e testes</p></div></div>
               </div>
-              <div className="next-step"><div><span>PRIORIDADE ACTUAL</span><strong>Implementar tarefas e fecho mensal</strong></div><ArrowDownRight size={19} /></div>
+              <div className="next-step"><div><span>PRIORIDADE ACTUAL</span><strong>Validar fiscalidade e integração contabilística</strong></div><ArrowDownRight size={19} /></div>
             </section>
           </div>
           <footer className="page-footer"><span>ContaExpress <span className="footer-separator">·</span> Plataforma proprietária ALINVEST</span><span>Desenvolvido para operação local <span className="footer-separator">·</span> Moçambique</span></footer>
