@@ -13,6 +13,7 @@ Este documento é um controlo operacional. A conclusão do CI não substitui a v
 - [ ] Fazer testes de autorização para cada função e empresa, incluindo utilizadores desactivados, sessões expiradas e memberships revogadas.
 - [ ] Validar os relatórios com um conjunto de lançamentos de referência aprovado por contabilista: balancete, razão, diário, balanço, demonstração de resultados e estornos.
 - [ ] Documentar quem pode confirmar lançamentos, estornar e encerrar períodos; validar os controlos com o responsável contabilístico.
+- [ ] Confirmar que o registo global de regras fiscais só está acessível a operadores formalmente designados em `platform_administrators`; um `superadmin` de uma organização não deve obter acesso global automaticamente.
 - [ ] Antes de activar regras fiscais, comprovar a fonte normativa, a vigência, o método de cálculo e os casos de referência; exigir revisão por uma pessoa diferente do autor e aprovação profissional registada.
 - [ ] Validar a API de simulação fiscal com dados de referência aprovados e confirmar que não existem taxas pré-carregadas nem cálculo por omissão.
 
@@ -39,4 +40,4 @@ Este documento é um controlo operacional. A conclusão do CI não substitui a v
 - O workflow de backups depende da configuração de segredos e do destino remoto; não se considera activo apenas por estar no repositório.
 - O limite de login actual é baseado em PostgreSQL, mas ainda precisa de testes de concorrência e de avaliação sob múltiplas instâncias.
 - A revisão de relatórios contabilísticos tem de ser feita por um profissional independente com dados de referência; os testes automatizados não certificam conformidade legal ou contabilística.
-- O motor fiscal é uma base técnica de regras versionadas. Não existem taxas legais pré-carregadas; nenhuma regra deve ser activada sem validação da fonte e aprovação profissional.
+- O motor fiscal é uma base técnica de regras versionadas. Não existem taxas legais pré-carregadas; nenhuma regra deve ser activada sem validação da fonte e aprovação profissional. A gestão do registo é global e deve ser atribuída explicitamente na tabela `platform_administrators`.
