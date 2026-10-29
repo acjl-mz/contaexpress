@@ -365,7 +365,7 @@ try {
   const afterLogout = await fetch(`${baseUrl}/api/auth/me`);
   assert.equal(afterLogout.status, 401, "após logout, a sessão não deve ser reutilizada");
 
-  console.log("HTTP smoke tests: autenticação, sessão, acesso a empresas e logout verificados.");
+  console.log("HTTP smoke tests: autenticação, alteração de palavra-passe, sessões, acesso a empresas e logout verificados.");
 } finally {
   if (fixtureClient) {
     await fixtureClient.query("SET session_replication_role = replica").catch(() => undefined);
