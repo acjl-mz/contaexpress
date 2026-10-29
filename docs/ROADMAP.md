@@ -19,7 +19,8 @@
 - [x] Teste de integração PostgreSQL para impedir confirmação por auditores e validar numeração sequencial por diário.
 - [x] Testes HTTP de fumo para login, credenciais inválidas, sessão, acesso à listagem de empresas e logout.
 - [ ] Testes HTTP de permissões por função e isolamento multempresa.
-- [ ] Testes concorrentes reais para confirmações e estornos simultâneos.
+- [x] Teste PostgreSQL concorrente para confirmar o mesmo lançamento em duas sessões e garantir uma única confirmação/numeração.
+- [ ] Testes concorrentes reais para estornos simultâneos e rate limiting.
 
 ## Etapa 3 — Núcleo contabilístico
 - [x] Estrutura inicial de plano de contas e API de consulta/criação.
@@ -59,9 +60,14 @@
 - [x] Primeira versão técnica do balanço e demonstração de resultados (requer validação contabilística com dados de teste antes de uso externo).
 - [x] Exportação CSV do razão e do balancete.
 - [x] Impressão com layout optimizado para A4 horizontal e opção de guardar como PDF pelo navegador.
-- [ ] Exportação PDF gerada no servidor e validação automatizada de totais.
+- [x] Exportação PDF gerada no servidor com validação de sessão/permissões através da API de relatórios.
+- [x] Testes unitários da estrutura PDF, paginação, escape de texto e presença de totais/valores contabilísticos.
+- [x] Procedimentos de backup PostgreSQL com checksum e restauração protegida por confirmação explícita.
+- [x] Ensaio automatizado de backup/restauração e verificação estrutural no CI.
+- [ ] Validação contabilística independente dos relatórios com saldos de referência aprovados por profissional.
 - Testes de isolamento, integridade e permissões.
-- Backups e ensaios de restauração.
+- [x] Scripts operacionais de backup e restauração com verificação SHA-256.
+- [x] Ensaio de restauração numa base descartável na pipeline CI.
 
 ## Etapa 6 — Expansão
 - Fiscalidade moçambicana com regras versionadas e fontes normativas validadas.
