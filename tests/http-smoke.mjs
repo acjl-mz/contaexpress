@@ -231,6 +231,97 @@ try {
   assert.equal(statementStatus.rows[0].status,"matched","a linha do extracto deve ficar marcada como correspondida");
   assert.equal(statementStatus.rows[0].treasury_transaction_id,matchingTransaction,"a correspondência deve manter a referência do movimento");
 
+  // Treasury -> ledger integration: authorised preparation, balanced draft, and authorised posting.
+  const treasuryYear = (await fixtureClient.query(
+    "INSERT INTO fiscal_years (accounting_entity_id,label,starts_on,ends_on) VALUES ($1,'HTTP-TREASURY','2026-01-01','2026-12-31') RETURNING id",
+    [adminEntity],
+  )).rows[0].id;
+  const treasuryPeriod = (await fixtureClient.query(
+    "INSERT INTO accounting_periods (accounting_entity_id,fiscal_year_id,label,starts_on,ends_on) VALUES ($1,$2,'HTTP-TREASURY','2026-01-01','2026-12-31') RETURNING id",
+    [adminEntity,treasuryYear],
+  )).rows[0].id;
+  await fixtureClient.query(
+    "INSERT INTO accounting_journals (accounting_entity_id,code,name) VALUES ($1,'GER','Diário Geral') ON CONFLICT (accounting_entity_id,code) DO NOTHING",
+    [adminEntity],
+  );
+  const treasuryLedger = (await fixtureClient.query(
+    "INSERT INTO chart_of_accounts (accounting_entity_id,code,name,account_type) VALUES ($1,'HTTPTR-1','Banco - integração','asset') RETURNING id",
+    [adminEntity],
+  )).rows[0].id;
+  const treasuryCounterpart = (await fixtureClient.query(
+    "INSERT INTO chart_of_accounts (accounting_entity_id,code,name,account_type) VALUES ($1,'HTTPTR-2','Receita - integração','revenue') RETURNING id",
+    [adminEntity],
+  )).rows[0].id;
+  await fixtureClient.query(
+    "INSERT INTO treasury_posting_mappings (accounting_entity_id,treasury_account_id,direction,category,ledger_account_id,counterpart_account_id,created_by) VALUES ($1,$2,'inflow','customer_receipt',$3,$4,$5)",
+    [adminEntity,bankAccount,treasuryLedger,treasuryCounterpart,payload.user.id],
+  );
+  const postingTransaction = (await fixtureClient.query(
+    "INSERT INTO treasury_transactions (accounting_entity_id,treasury_account_id,transaction_date,direction,category,description,amount,reference,status,created_by) VALUES ($1,$2,'2026-10-21','inflow','customer_receipt','Recebimento para integração contabilística',1200,'TREASURY-POST-001','recorded',$3) RETURNING id",
+    [adminEntity,bankAccount,payload.user.id],
+  )).rows[0].id;
+
+  const anonymousPrepare = await fetch(baseUrl + "/api/treasury/post", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ entityId: adminEntity, transactionId: postingTransaction }),
+  });
+  assert.equal(anonymousPrepare.status, 401, "preparação sem sessão deve ser rejeitada");
+
+  const outsiderPrepare = await fetch(baseUrl + "/api/treasury/post", {
+    method: "POST", headers: { cookie: auditorCookie, "content-type": "application/json" },
+    body: JSON.stringify({ entityId: adminEntity, transactionId: postingTransaction }),
+  });
+  assert.equal(outsiderPrepare.status, 403, "utilizador sem acesso à empresa não deve preparar lançamento");
+
+  const prepareEntry = await fetch(baseUrl + "/api/treasury/post", {
+    method: "POST", headers: { cookie: sessionCookie, "content-type": "application/json" },
+    body: JSON.stringify({ entityId: adminEntity, transactionId: postingTransaction }),
+  });
+  assert.equal(prepareEntry.status, 201, "utilizador autorizado deve preparar o rascunho contabilístico");
+  const preparedPayload = await prepareEntry.json();
+  assert.equal(preparedPayload.status, "draft", "a preparação não deve confirmar automaticamente o lançamento");
+  const preparedLines = await fixtureClient.query(
+    "SELECT debit::numeric AS debit,credit::numeric AS credit,account_id FROM journal_entry_lines WHERE accounting_entity_id=$1 AND entry_id=$2 ORDER BY line_number",
+    [adminEntity,preparedPayload.entry.id],
+  );
+  assert.equal(preparedLines.rowCount, 2, "rascunho deve conter duas linhas");
+  assert.equal(Number(preparedLines.rows[0].debit)+Number(preparedLines.rows[1].debit),1200,"débito deve corresponder ao valor do movimento");
+  assert.equal(Number(preparedLines.rows[0].credit)+Number(preparedLines.rows[1].credit),1200,"crédito deve corresponder ao valor do movimento");
+  assert.equal(preparedLines.rows[0].account_id,treasuryLedger,"entrada deve debitar a conta de tesouraria");
+  assert.equal(preparedLines.rows[1].account_id,treasuryCounterpart,"entrada deve creditar a conta de contrapartida");
+
+  const repeatedPrepare = await fetch(baseUrl + "/api/treasury/post", {
+    method: "POST", headers: { cookie: sessionCookie, "content-type": "application/json" },
+    body: JSON.stringify({ entityId: adminEntity, transactionId: postingTransaction }),
+  });
+  assert.equal(repeatedPrepare.status, 200, "repetição deve devolver o lançamento existente");
+  assert.equal((await repeatedPrepare.json()).alreadyPrepared, true, "repetição não deve criar segundo lançamento");
+
+  const auditorPostTreasuryEntry = await fetch(
+    baseUrl + "/api/accounting/entries/" + encodeURIComponent(preparedPayload.entry.id) + "/post?entityId=" + encodeURIComponent(adminEntity),
+    { method: "POST", headers: { cookie: auditorCookie } },
+  );
+  assert.equal(auditorPostTreasuryEntry.status, 403, "auditor não deve confirmar o rascunho criado pela tesouraria");
+
+  const confirmTreasuryEntry = await fetch(
+    baseUrl + "/api/accounting/entries/" + encodeURIComponent(preparedPayload.entry.id) + "/post?entityId=" + encodeURIComponent(adminEntity),
+    { method: "POST", headers: { cookie: sessionCookie } },
+  );
+  assert.equal(confirmTreasuryEntry.status, 200, "contabilista autorizado deve confirmar o lançamento preparado");
+  const confirmedPayload = await confirmTreasuryEntry.json();
+  assert.equal(confirmedPayload.entry.status, "posted", "a API deve devolver o estado confirmado");
+  const persistedPosting = await fixtureClient.query(
+    "SELECT status,entry_number FROM journal_entries WHERE accounting_entity_id=$1 AND id=$2",
+    [adminEntity,preparedPayload.entry.id],
+  );
+  assert.equal(persistedPosting.rows[0].status, "posted", "a confirmação deve persistir no PostgreSQL");
+  assert.ok(persistedPosting.rows[0].entry_number, "o lançamento confirmado deve receber número sequencial");
+  const linkedMovement = await fixtureClient.query(
+    "SELECT journal_entry_id FROM treasury_transactions WHERE accounting_entity_id=$1 AND id=$2",
+    [adminEntity,postingTransaction],
+  );
+  assert.equal(linkedMovement.rows[0].journal_entry_id,preparedPayload.entry.id, "o movimento de tesouraria deve continuar ligado ao lançamento confirmado");
+
   const adminYear = (await fixtureClient.query("INSERT INTO fiscal_years (accounting_entity_id, label, starts_on, ends_on) VALUES ($1, 'HTTP-REVERSAL', '2026-01-01', '2026-12-31') RETURNING id", [adminEntity])).rows[0].id;
   const adminPeriod = (await fixtureClient.query("INSERT INTO accounting_periods (accounting_entity_id, fiscal_year_id, label, starts_on, ends_on) VALUES ($1, $2, 'HTTP-REVERSAL', '2026-01-01', '2026-12-31') RETURNING id", [adminEntity, adminYear])).rows[0].id;
   const adminJournal = (await fixtureClient.query("INSERT INTO accounting_journals (accounting_entity_id, code, name) VALUES ($1, 'HTTPREV', 'HTTP reversal test') RETURNING id", [adminEntity])).rows[0].id;
