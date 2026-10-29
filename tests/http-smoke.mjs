@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import pg from "pg";
+import { hash } from "bcryptjs";
+
+const { Client } = pg;
 
 const host = "127.0.0.1";
 const port = Number(process.env.HTTP_TEST_PORT || 3100);
@@ -17,6 +21,8 @@ const server = spawn(process.execPath, [
 ], { stdio: ["ignore", "pipe", "pipe"], env: process.env });
 
 let serverOutput = "";
+let fixtureClient;
+let fixtureIds;
 server.stdout.on("data", chunk => { serverOutput += chunk.toString(); });
 server.stderr.on("data", chunk => { serverOutput += chunk.toString(); });
 
@@ -80,6 +86,34 @@ try {
   const sessionPayload = await authenticatedMe.json();
   assert.equal(sessionPayload.user?.email, process.env.ADMIN_EMAIL.toLowerCase());
 
+  fixtureClient = new Client({ connectionString: process.env.DATABASE_URL });
+  await fixtureClient.connect();
+  const fixtureOrg = (await fixtureClient.query("INSERT INTO organisations (legal_name, display_name) VALUES ($1, $1) RETURNING id", [`HTTP security org ${Date.now()}`])).rows[0].id;
+  const auditorEmail = `http-auditor-${Date.now()}@example.test`;
+  const auditorPassword = "CI-auditor-test-password";
+  const auditorHash = await hash(auditorPassword, 10);
+  const auditorId = (await fixtureClient.query("INSERT INTO app_users (email, full_name, password_hash, status) VALUES ($1, $2, $3, 'active') RETURNING id", [auditorEmail, "HTTP Auditor Test", auditorHash])).rows[0].id;
+  await fixtureClient.query("INSERT INTO organisation_memberships (organisation_id, user_id, role) VALUES ($1, $2, 'auditor')", [fixtureOrg, auditorId]);
+  const auditorEntity = (await fixtureClient.query("INSERT INTO accounting_entities (organisation_id, legal_name) VALUES ($1, $2) RETURNING id", [fixtureOrg, "HTTP Auditor Entity"])).rows[0].id;
+  await fixtureClient.query("INSERT INTO entity_memberships (accounting_entity_id, user_id, role) VALUES ($1, $2, 'auditor')", [auditorEntity, auditorId]);
+  const fiscalYear = (await fixtureClient.query("INSERT INTO fiscal_years (accounting_entity_id, label, starts_on, ends_on) VALUES ($1, 'HTTP-SECURITY', '2026-01-01', '2026-12-31') RETURNING id", [auditorEntity])).rows[0].id;
+  const period = (await fixtureClient.query("INSERT INTO accounting_periods (accounting_entity_id, fiscal_year_id, label, starts_on, ends_on) VALUES ($1, $2, 'HTTP-SECURITY', '2026-01-01', '2026-12-31') RETURNING id", [auditorEntity, fiscalYear])).rows[0].id;
+  const journal = (await fixtureClient.query("INSERT INTO accounting_journals (accounting_entity_id, code, name) VALUES ($1, 'HTTP', 'HTTP security journal') RETURNING id", [auditorEntity])).rows[0].id;
+  const debitAccount = (await fixtureClient.query("INSERT INTO chart_of_accounts (accounting_entity_id, code, name, account_type) VALUES ($1, 'HTTP-1', 'Banco', 'asset') RETURNING id", [auditorEntity])).rows[0].id;
+  const creditAccount = (await fixtureClient.query("INSERT INTO chart_of_accounts (accounting_entity_id, code, name, account_type) VALUES ($1, 'HTTP-2', 'Capital', 'equity') RETURNING id", [auditorEntity])).rows[0].id;
+  const entry = (await fixtureClient.query("INSERT INTO journal_entries (accounting_entity_id, period_id, journal_id, entry_date, description, created_by) VALUES ($1, $2, $3, '2026-10-20', 'HTTP permission test', $4) RETURNING id", [auditorEntity, period, journal, auditorId])).rows[0].id;
+  await fixtureClient.query("INSERT INTO journal_entry_lines (accounting_entity_id, entry_id, line_number, account_id, debit, credit) VALUES ($1, $2, 1, $3, 100, 0), ($1, $2, 2, $4, 0, 100)", [auditorEntity, entry, debitAccount, creditAccount]);
+  fixtureIds = { org: fixtureOrg, user: auditorId, entity: auditorEntity, year: fiscalYear, period, journal, debitAccount, creditAccount, entry };
+
+  const crossTenantReport = await fetch(`${baseUrl}/api/accounting/reports?entityId=${encodeURIComponent(auditorEntity)}&report=trial-balance`, { headers: { cookie: sessionCookie } });
+  assert.equal(crossTenantReport.status, 403, "a sessão de outra organização não deve consultar relatórios da entidade");
+
+  const auditorLogin = await fetch(`${baseUrl}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: auditorEmail, password: auditorPassword }) });
+  assert.equal(auditorLogin.status, 200, "auditor de teste deve conseguir iniciar sessão");
+  const auditorCookie = (auditorLogin.headers.get("set-cookie") || "").split(";")[0];
+  const auditorPost = await fetch(`${baseUrl}/api/accounting/entries/${encodeURIComponent(entry)}/post?entityId=${encodeURIComponent(auditorEntity)}`, { method: "POST", headers: { cookie: auditorCookie } });
+  assert.equal(auditorPost.status, 403, "auditor não deve confirmar lançamentos pela API HTTP");
+
   const authenticatedCompanies = await fetch(`${baseUrl}/api/companies`, {
     headers: { cookie: sessionCookie },
   });
@@ -113,6 +147,23 @@ try {
 
   console.log("HTTP smoke tests: autenticação, sessão, acesso a empresas e logout verificados.");
 } finally {
+  if (fixtureClient) {
+    if (fixtureIds) {
+      const f = fixtureIds;
+      await fixtureClient.query("DELETE FROM journal_entry_lines WHERE entry_id = $1", [f.entry]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM journal_entries WHERE id = $1", [f.entry]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM chart_of_accounts WHERE accounting_entity_id = $1", [f.entity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM accounting_journals WHERE id = $1", [f.journal]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM accounting_periods WHERE id = $1", [f.period]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM fiscal_years WHERE id = $1", [f.year]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM entity_memberships WHERE accounting_entity_id = $1", [f.entity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM accounting_entities WHERE id = $1", [f.entity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM organisation_memberships WHERE organisation_id = $1 AND user_id = $2", [f.org, f.user]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM app_users WHERE id = $1", [f.user]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM organisations WHERE id = $1", [f.org]).catch(() => undefined);
+    }
+    await fixtureClient.end().catch(() => undefined);
+  }
   server.kill("SIGTERM");
   await new Promise(resolve => {
     if (server.exitCode !== null || server.signalCode !== null) return resolve();
