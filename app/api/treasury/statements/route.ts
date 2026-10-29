@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
         COUNT(l.id)::int AS "totalLines", COUNT(l.id) FILTER (WHERE l.status='matched')::int AS "matchedLines"
       FROM bank_statement_imports i
       JOIN treasury_accounts a ON a.id=i.treasury_account_id AND a.accounting_entity_id=i.accounting_entity_id
-      LEFT JOIN bank_statement_lines l ON l.import_id=i.id AND l.accounting_entity_id=i.accounting_entity_id AND l.status='matched'
+      LEFT JOIN bank_statement_lines l ON l.import_id=i.id AND l.accounting_entity_id=i.accounting_entity_id
       WHERE i.accounting_entity_id=$1
       GROUP BY i.id,a.name ORDER BY i.created_at DESC LIMIT 100
     `, [entityId]);
@@ -118,8 +118,9 @@ export async function POST(request: NextRequest) {
         }
         await client.query(`UPDATE bank_statement_lines SET status='matched',treasury_transaction_id=$1,matched_by=$2,matched_at=now()
           WHERE id=$3 AND accounting_entity_id=$4`, [transactionId, user.id, lineId, entityId]);
-        await client.query(`UPDATE treasury_transactions SET status='reconciled',updated_at=now()
+        const updated = await client.query(`UPDATE treasury_transactions SET status='reconciled',updated_at=now()
           WHERE id=$1 AND accounting_entity_id=$2 AND status='recorded'`, [transactionId, entityId]);
+        if (updated.rowCount !== 1) throw new Error("O movimento já foi alterado por outro processo.");
         await client.query(`
           INSERT INTO audit_events (organisation_id,accounting_entity_id,actor_user_id,event_type,target_type,target_id,details)
           SELECT organisation_id,$1,$2,'treasury.statement.line.matched','bank_statement_line',$3,$4::jsonb
@@ -129,6 +130,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ matched: true, lineId, transactionId });
       } catch (error) {
         await client.query("ROLLBACK").catch(() => undefined);
+        if (error && typeof error === "object" && "code" in error && (error as {code?:string}).code === "23505") {
+          return NextResponse.json({ error: "Este movimento já foi associado a outra linha de extracto." }, { status: 409 });
+        }
         throw error;
       } finally {
         client.release();
@@ -151,9 +155,11 @@ export async function POST(request: NextRequest) {
       const reference = clean(item.reference,120) || null;
       const amount = Number(item.amount);
       const direction = clean(item.direction,10) || (amount < 0 ? "outflow" : "inflow");
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || description.length < 1 ||
+      const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+        !Number.isNaN(Date.parse(date)) && new Date(date + "T00:00:00.000Z").toISOString().slice(0,10) === date;
+      if (!validDate || description.length < 1 ||
           !Number.isFinite(amount) || amount === 0 || Math.abs(amount) > 1_000_000_000_000 ||
-          !["inflow","outflow"].includes(direction)) throw new Error("Cada linha precisa de data ISO, descrição, valor diferente de zero e sentido válido.");
+          !["inflow","outflow"].includes(direction)) throw new Error("Cada linha precisa de data ISO válida, descrição, valor diferente de zero e sentido válido.");
       return { date, description, reference, amount: Math.abs(amount), direction };
     });
     if (parsed.some(row => rows.find((r: Record<string, unknown>) => clean(r.date,10) === row.date) === undefined)) {
@@ -167,11 +173,11 @@ export async function POST(request: NextRequest) {
         VALUES ($1,$2,$3,$4,$5) RETURNING id
       `, [entityId,accountId,fileName,parsed.length,user.id]);
       const importId = inserted.rows[0].id;
-      for (const row of parsed) {
+      for (const [index, row] of parsed.entries()) {
         await client.query(`
-          INSERT INTO bank_statement_lines (accounting_entity_id,import_id,treasury_account_id,line_date,description,direction,amount,reference)
-          VALUES ($1,$2,$3,$4::date,$5,$6,$7,$8)
-        `, [entityId,importId,accountId,row.date,row.description,row.direction,row.amount,row.reference]);
+          INSERT INTO bank_statement_lines (accounting_entity_id,import_id,treasury_account_id,line_number,line_date,description,direction,amount,reference)
+          VALUES ($1,$2,$3,$4,$5::date,$6,$7,$8,$9)
+        `, [entityId,importId,accountId,index + 1,row.date,row.description,row.direction,row.amount,row.reference]);
       }
       await client.query(`
         INSERT INTO audit_events (organisation_id,accounting_entity_id,actor_user_id,event_type,target_type,target_id,details)
@@ -187,8 +193,9 @@ export async function POST(request: NextRequest) {
       client.release();
     }
   } catch (error) {
-    console.error("Falha ao importar/reconciliar extracto:", error);
     const message = error instanceof Error ? error.message : "";
-    return NextResponse.json({ error: message.includes("Cada linha") ? message : "Não foi possível importar ou reconciliar o extracto." }, { status: 500 });
+    if (message.includes("Cada linha")) return NextResponse.json({ error: message }, { status: 400 });
+    console.error("Falha ao importar/reconciliar extracto:", error);
+    return NextResponse.json({ error: "Não foi possível importar ou reconciliar o extracto." }, { status: 500 });
   }
 }
