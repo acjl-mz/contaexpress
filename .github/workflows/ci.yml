@@ -54,7 +54,8 @@ jobs:
             database/migrations/009_monthly_close.sql \
             database/migrations/010_password_reset.sql \
             database/migrations/011_treasury_tax.sql \
-            database/migrations/012_treasury_accounting_integration.sql
+            database/migrations/012_treasury_accounting_integration.sql \
+            database/migrations/013_bank_statement_reconciliation.sql
           do
             echo "Applying $migration"
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
