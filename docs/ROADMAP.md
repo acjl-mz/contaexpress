@@ -27,7 +27,8 @@
 - [x] Teste de integração PostgreSQL para confirmação de lançamentos equilibrados, rejeição de lançamentos desequilibrados e imutabilidade após confirmação.
 - [ ] Revisão contabilística do plano de contas e ampliação dos testes de integração.
 - [x] Fluxo formal de estorno com lançamento inverso, referência ao original, auditoria e bloqueio de duplicação.
-- [ ] Testes automatizados de integração PostgreSQL para confirmar estornos, períodos fechados e concorrência.
+- [x] Teste de integração PostgreSQL para estorno ligado ao original, inversão de linhas, efeito líquido nulo, bloqueio de duplicação e recusa de confirmação em período fechado.
+- [ ] Testes de concorrência para estornos simultâneos e numeração dos lançamentos.
 - [x] API e interface inicial do razão por conta e balancete de verificação, com filtros por data e exportação CSV.
 - [x] Diário geral detalhado com conta, descrição, estado, diário, débitos e créditos; exportação CSV.
 - [x] API de balanço e demonstração de resultados com filtros de data e cálculo de saldos a partir de lançamentos confirmados.
