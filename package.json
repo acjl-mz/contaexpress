@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:unit": "node --test tests/report-validation.test.mjs tests/report-calculations.test.mjs tests/report-pdf.test.mjs",
+    "test:unit": "node --test tests/report-validation.test.mjs tests/report-calculations.test.mjs tests/report-pdf.test.mjs tests/tax-rule-engine.test.mjs",
     "test:integration": "node --test tests/*.integration.test.mjs",
     "bootstrap:admin": "node scripts/bootstrap-admin.mjs",
     "test:all": "npm run test:unit && npm run test:integration",
