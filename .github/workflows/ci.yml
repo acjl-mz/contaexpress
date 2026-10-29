@@ -56,7 +56,7 @@ jobs:
             database/migrations/011_treasury_tax.sql \
             database/migrations/012_treasury_accounting_integration.sql \
             database/migrations/013_bank_statement_reconciliation.sql \
-            database/migrations/014_versioned_tax_rules.sql \
+            database/migrations/014_tax_rule_registry.sql \
             database/migrations/015_organisation_invitations.sql
           do
             echo "Applying $migration"
