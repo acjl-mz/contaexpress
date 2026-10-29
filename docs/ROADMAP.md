@@ -176,3 +176,15 @@ O núcleo actual cobre autenticação, organizações/empresas, plano de contas,
 - [ ] Monitorização, alertas, política RPO/RTO e ensaio de recuperação a partir de backup cifrado remoto.
 - [ ] Homologação funcional com utilizadores-piloto e aprovação formal antes de abrir a plataforma ao público.
 
+### J. Integração comercial — primeira versão implementada
+- [x] Cadastro multi-tipo de clientes e fornecedores por empresa.
+- [x] Configuração de contas de controlo de clientes/fornecedores, vendas/compras e impostos.
+- [x] Registo de facturas de clientes e facturas de fornecedores com linhas e totais validados.
+- [x] Criação transaccional de rascunhos contabilísticos equilibrados e vinculados aos documentos.
+- [x] Registo de recebimentos e pagamentos na Tesouraria, com alocação parcial ou total ao documento.
+- [x] Auditoria das operações comerciais e isolamento por empresa.
+- [ ] Interface de utilizador para clientes, fornecedores, documentos, mapeamento e pagamentos.
+- [ ] Aprovação/postagem do rascunho contabilístico e conciliação automática do pagamento com o documento.
+- [ ] Notas de crédito/débito, proformas, recibos e séries documentais.
+- [ ] Validação fiscal/legal de facturação em Moçambique e requisitos da Autoridade Tributária.
+- [ ] Testes de integração e ponta a ponta de todo o ciclo comercial.
