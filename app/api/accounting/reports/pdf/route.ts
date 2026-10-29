@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { GET as getReport } from "../route";
 import { renderReportPdf } from "@/lib/accounting/report-pdf.mjs";
 
 export const runtime = "nodejs";
@@ -12,12 +13,13 @@ export async function GET(request: NextRequest) {
   if (!allowed.includes(report)) return NextResponse.json({ error: "Tipo de relatório inválido." }, { status: 400 });
 
   try {
-    const upstreamUrl = new URL("/api/accounting/reports", request.nextUrl.origin);
+    const upstreamUrl = new URL(request.url);
+    upstreamUrl.pathname = "/api/accounting/reports";
     upstreamUrl.search = params.toString();
-    const upstream = await fetch(upstreamUrl, {
+    const upstreamRequest = new NextRequest(upstreamUrl, {
       headers: { cookie: request.headers.get("cookie") || "" },
-      cache: "no-store",
     });
+    const upstream = await getReport(upstreamRequest);
     if (!upstream.ok) {
       const payload = await upstream.json().catch(() => ({ error: "Não foi possível gerar o relatório." }));
       return NextResponse.json(payload, { status: upstream.status });
