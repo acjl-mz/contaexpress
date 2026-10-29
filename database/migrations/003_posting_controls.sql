@@ -88,10 +88,11 @@ BEGIN
     RAISE EXCEPTION 'O utilizador não tem permissão para confirmar lançamentos.';
   END IF;
 
-  SELECT count(*), COALESCE(sum(debit), 0), COALESCE(sum(credit), 0)
+  SELECT count(*), COALESCE(sum(lines.debit), 0), COALESCE(sum(lines.credit), 0)
     INTO v_count, v_debit, v_credit
-  FROM journal_entry_lines
-  WHERE entry_id = p_entry_id AND accounting_entity_id = v_entry.accounting_entity_id;
+  FROM journal_entry_lines AS lines
+  WHERE lines.entry_id = p_entry_id
+    AND lines.accounting_entity_id = v_entry.accounting_entity_id;
 
   IF v_count < 2 THEN RAISE EXCEPTION 'Um lançamento deve conter pelo menos duas linhas.'; END IF;
   IF v_debit <= 0 OR v_credit <= 0 OR v_debit <> v_credit THEN
