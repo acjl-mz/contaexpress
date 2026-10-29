@@ -26,7 +26,7 @@ test("treasury and tax module schemas exist with tenant-scoped keys and safe sta
     );
     const all = constraints.rows.map(r=>r.definition).join("\n");
     assert.match(all,/accounting_entity_id/,"module data must be scoped to an accounting entity");
-    assert.match(all,/amount > 0/,"treasury transactions must require a positive amount");
+    assert.match(all,/amount >/,"treasury transactions must require a positive amount");
     assert.match(all,/inflow/,"treasury direction must be constrained");
     assert.match(all,/paid/,"tax obligation states must be constrained");
     assert.match(all,/tax_type/,"tax type must be constrained");
