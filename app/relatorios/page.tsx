@@ -52,6 +52,11 @@ export default function ReportsPage(){
  },[entityId,report,from,to,accountId,router]);
  useEffect(()=>{if(entityId&&!(report==="ledger"&&!accountId))void loadReport();},[entityId,report,accountId,loadReport]);
  const rows=useMemo(()=>data?.accounts??data?.journalLines??data?.lines??[],[data]);
+ function exportPdf(){
+  if(!data||!entityId)return;
+  const p=new URLSearchParams({entityId,report});if(from)p.set("from",from);if(to)p.set("to",to);if(report==="ledger"&&accountId)p.set("accountId",accountId);
+  const a=document.createElement("a");a.href="/api/accounting/reports/pdf?"+p.toString();a.download=(report+"-"+(to||"periodo")+".pdf");document.body.appendChild(a);a.click();a.remove();
+ }
  function exportCsv(){
   if(!data)return;
   const fields=rows.length?Object.keys(rows[0]):Object.keys(data.totals??{});
