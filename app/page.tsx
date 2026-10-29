@@ -63,7 +63,7 @@ export default function HomePage() {
       <section className="main-panel">
         <header className="topbar">
           <div className="breadcrumb">Espaço de trabalho <ChevronRight size={15} /> <strong>Visão geral</strong></div>
-          <div className="topbar-actions"><span className="environment-pill"><span /> Fase de fundação</span><button className="icon-button" aria-label="Notificações"><Bell size={18} /></button><div className="avatar" aria-label="Utilizador">CE</div></div>
+          <div className="topbar-actions"><span className="environment-pill"><span /> Fase de fundação</span><button className="icon-button" aria-label="Notificações"><Bell size={18} /></button><Link className="avatar" href="/perfil/seguranca" aria-label="Perfil e segurança da conta" title="Perfil e segurança">CE</Link></div>
         </header>
 
         <div className="page-content">
