@@ -20,7 +20,7 @@ jobs:
       BACKUP_GPG_RECIPIENT: ${{ secrets.BACKUP_GPG_RECIPIENT }}
       BACKUP_REMOTE: ${{ secrets.BACKUP_REMOTE }}
       BACKUP_RETENTION_DAYS: ${{ vars.BACKUP_RETENTION_DAYS || '30' }}
-      BACKUP_DIR: ${{ runner.temp }}/contaexpress-backups
+      BACKUP_DIR: /tmp/contaexpress-backups
     steps:
       - name: Check whether scheduled backups are enabled
         id: preflight
