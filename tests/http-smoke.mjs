@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import pg from "pg";
-import { hash } from "bcryptjs";
+import bcrypt from "bcryptjs";
 
 const { Client } = pg;
+const { hash } = bcrypt;
 
 const host = "127.0.0.1";
 const port = Number(process.env.HTTP_TEST_PORT || 3100);
