@@ -1,6 +1,8 @@
 name: ContaExpress encrypted database backup
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: "17 2 * * *"
@@ -23,9 +25,9 @@ jobs:
       - name: Check whether scheduled backups are enabled
         id: preflight
         run: |
-          if [[ "$BACKUP_ENABLED" != "true" ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == "push" || "$BACKUP_ENABLED" != "true" ]]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "Encrypted offsite backups are disabled; set repository variable BACKUP_ENABLED=true after configuring all secrets."
+            echo "Backup job intentionally skipped for push events or while BACKUP_ENABLED is not true."
             exit 0
           fi
           test -n "$DATABASE_URL"
