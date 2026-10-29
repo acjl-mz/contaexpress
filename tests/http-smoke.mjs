@@ -232,6 +232,78 @@ try {
   assert.equal(statementStatus.rows[0].status,"matched","a linha do extracto deve ficar marcada como correspondida");
   assert.equal(statementStatus.rows[0].treasury_transaction_id,matchingTransaction,"a correspondência deve manter a referência do movimento");
 
+  // Treasury-to-ledger workflow: reject missing mappings, prepare a balanced draft, and remain idempotent.
+  const treasuryYear = (await fixtureClient.query(
+    "INSERT INTO fiscal_years (accounting_entity_id,label,starts_on,ends_on) VALUES ($1,$2,'2026-01-01','2026-12-31') RETURNING id",
+    [adminEntity,"HTTP-TREASURY-"+Date.now()],
+  )).rows[0].id;
+  const treasuryPeriod = (await fixtureClient.query(
+    "INSERT INTO accounting_periods (accounting_entity_id,fiscal_year_id,label,starts_on,ends_on) VALUES ($1,$2,'2026','2026-01-01','2026-12-31') RETURNING id",
+    [adminEntity,treasuryYear],
+  )).rows[0].id;
+  const generalJournal = (await fixtureClient.query(
+    "INSERT INTO accounting_journals (accounting_entity_id,code,name) VALUES ($1,'GER','Diário Geral HTTP') ON CONFLICT (accounting_entity_id,code) DO UPDATE SET is_active=TRUE RETURNING id",
+    [adminEntity],
+  )).rows[0].id;
+  const treasuryLedger = (await fixtureClient.query(
+    "INSERT INTO chart_of_accounts (accounting_entity_id,code,name,account_type) VALUES ($1,$2,'Banco — teste tesouraria','asset') RETURNING id",
+    [adminEntity,"HTTP-BANK-"+Date.now()],
+  )).rows[0].id;
+  const counterpartLedger = (await fixtureClient.query(
+    "INSERT INTO chart_of_accounts (accounting_entity_id,code,name,account_type) VALUES ($1,$2,'Receitas — teste tesouraria','income') RETURNING id",
+    [adminEntity,"HTTP-INCOME-"+Date.now()],
+  )).rows[0].id;
+  const unmappedMovement = (await fixtureClient.query(
+    "INSERT INTO treasury_transactions (accounting_entity_id,treasury_account_id,transaction_date,direction,category,description,amount,status,created_by) VALUES ($1,$2,'2026-10-20','inflow','other','Movimento sem mapeamento',50,'recorded',$3) RETURNING id",
+    [adminEntity,bankAccount,payload.user.id],
+  )).rows[0].id;
+  const missingMapping = await fetch(baseUrl+"/api/treasury/post",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({entityId:adminEntity,transactionId:unmappedMovement}),
+  });
+  assert.equal(missingMapping.status,409,"a tesouraria deve bloquear a preparação sem mapeamento contabilístico");
+  const mappingResponse = await fetch(baseUrl+"/api/treasury/mappings",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({entityId:adminEntity,treasuryAccountId:bankAccount,direction:"inflow",category:"customer_receipt",ledgerAccountId:treasuryLedger,counterpartAccountId:counterpartLedger}),
+  });
+  assert.equal(mappingResponse.status,201,"contabilista autorizado deve poder configurar o mapeamento da tesouraria");
+  const postingMovement = (await fixtureClient.query(
+    "INSERT INTO treasury_transactions (accounting_entity_id,treasury_account_id,transaction_date,direction,category,description,amount,reference,status,created_by) VALUES ($1,$2,'2026-10-20','inflow','customer_receipt','Recebimento para lançamento automático',1250,'HTTP-POST-001','recorded',$3) RETURNING id",
+    [adminEntity,bankAccount,payload.user.id],
+  )).rows[0].id;
+  const prepared = await fetch(baseUrl+"/api/treasury/post",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({entityId:adminEntity,transactionId:postingMovement}),
+  });
+  const preparedPayload = await prepared.json();
+  assert.equal(prepared.status,201,"movimento mapeado deve gerar rascunho contabilístico");
+  assert.equal(preparedPayload.status,"draft","o lançamento gerado deve permanecer em rascunho para revisão");
+  const generatedLines = await fixtureClient.query(
+    "SELECT line_number,debit,credit,account_id FROM journal_entry_lines WHERE accounting_entity_id=$1 AND entry_id=$2 ORDER BY line_number",
+    [adminEntity,preparedPayload.entry.id],
+  );
+  assert.equal(generatedLines.rowCount,2,"o lançamento gerado deve conter duas linhas");
+  assert.equal(Number(generatedLines.rows[0].debit),1250,"a linha de débito deve reflectir o movimento");
+  assert.equal(Number(generatedLines.rows[1].credit),1250,"a linha de crédito deve reflectir o movimento");
+  assert.equal(generatedLines.rows[0].account_id,treasuryLedger,"o débito de uma entrada deve ir para a conta de tesouraria");
+  assert.equal(generatedLines.rows[1].account_id,counterpartLedger,"o crédito deve ir para a conta de contrapartida");
+  const repeatedPreparation = await fetch(baseUrl+"/api/treasury/post",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({entityId:adminEntity,transactionId:postingMovement}),
+  });
+  assert.equal(repeatedPreparation.status,200,"repetir o pedido não deve criar outro lançamento");
+  assert.equal((await repeatedPreparation.json()).alreadyPrepared,true,"a API deve sinalizar o lançamento já preparado");
+  const linkedMovement = await fixtureClient.query(
+    "SELECT journal_entry_id FROM treasury_transactions WHERE accounting_entity_id=$1 AND id=$2",
+    [adminEntity,postingMovement],
+  );
+  assert.equal(linkedMovement.rows[0].journal_entry_id,preparedPayload.entry.id,"o movimento deve manter o vínculo ao rascunho");
+  const postingAudit = await fixtureClient.query(
+    "SELECT id FROM audit_events WHERE accounting_entity_id=$1 AND event_type='treasury.transaction.journal_draft_created' AND target_id=$2",
+    [adminEntity,preparedPayload.entry.id],
+  );
+  assert.equal(postingAudit.rowCount,1,"a preparação deve registar um evento de auditoria");
+
   // Versioned tax-rule workflow: draft -> review -> independent approval -> activation -> preview -> retirement.
   const adminOrganisation = (await fixtureClient.query(
     "SELECT organisation_id FROM accounting_entities WHERE id=$1",
