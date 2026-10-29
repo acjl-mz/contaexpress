@@ -68,3 +68,15 @@ jobs:
         run: npm run build
       - name: HTTP smoke tests
         run: node tests/http-smoke.mjs
+      - name: Database backup and restore drill
+        run: |
+          set -euo pipefail
+          export BACKUP_DIR="$RUNNER_TEMP/contaexpress-backup"
+          bash scripts/db-backup.sh
+          backup_file="$(find "$BACKUP_DIR" -maxdepth 1 -name "contaexpress-*.dump" -print -quit)"
+          test -n "$backup_file"
+          createdb -h 127.0.0.1 -U ci -w contaexpress_restore_ci
+          export RESTORE_DATABASE_URL="postgresql://ci:ci@127.0.0.1:5432/contaexpress_restore_ci"
+          RESTORE_CONFIRM=YES_RESTORE_DATABASE bash scripts/db-restore.sh "$backup_file"
+          bash scripts/db-verify.sh
+          dropdb -h 127.0.0.1 -U ci -w contaexpress_restore_ci
