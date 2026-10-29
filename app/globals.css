@@ -352,3 +352,36 @@ h2{font-size:17px;margin:0;font-weight:800}
 .report-loading-icon{animation:report-spin 1.2s linear infinite}
 @keyframes report-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.report-loading-icon{animation:none}}
+
+/* Tesouraria e fiscalidade */
+.companies-toolbar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:0 0 20px}
+.companies-toolbar .form-field{min-width:260px;max-width:460px;flex:1}
+.companies-content .panel{margin-bottom:18px;overflow:hidden}
+.companies-content .panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 22px;border-bottom:1px solid var(--line)}
+.companies-content .panel-heading h2{font-size:17px;margin:0}
+.companies-content .panel-heading .eyebrow{margin-bottom:5px}
+.companies-content .company-form{padding:0 22px 20px}
+.companies-content .company-form .panel-heading{padding:20px 0 16px;margin-bottom:17px}
+.companies-content .company-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.companies-content .form-field{display:grid;gap:7px;color:#566a76;font-size:12px;font-weight:600}
+.companies-content .form-field input,.companies-content .form-field select,.companies-content .form-field textarea,.companies-content td select{width:100%;min-width:0;border:1px solid #dce4e9;border-radius:7px;padding:10px 11px;background:#fff;color:#233b4a;font:inherit;font-weight:400;outline:none}
+.companies-content .form-field input:focus,.companies-content .form-field select:focus,.companies-content .form-field textarea:focus{border-color:#7193bc;box-shadow:0 0 0 3px #12345a12}
+.companies-content .form-field.wide{grid-column:1/-1}
+.companies-content .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.companies-content .table-wrap{overflow-x:auto}
+.companies-content table{width:100%;border-collapse:collapse;text-align:left;white-space:nowrap}
+.companies-content th{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#7e8b94;background:#f8fafb;padding:12px 17px}
+.companies-content td{padding:14px 17px;border-top:1px solid #edf0f2;font-size:12px;color:#516571}
+.companies-content td strong,.companies-content td small{display:block}
+.companies-content td strong{font-size:12px;color:#273f4e;margin-bottom:3px}
+.companies-content td small{font-size:10px;color:#8b98a0;margin-top:3px}
+.companies-content .empty-state{padding:24px;color:#81909a;font-size:12px}
+.companies-content .amount-positive{color:#18764a;font-weight:700}
+.companies-content .amount-negative{color:#b34242;font-weight:700}
+.companies-content .state-badge{display:inline-block;white-space:nowrap}
+.companies-content .inline-error{margin:12px 0}
+.companies-content .notice{color:#28583f;font-size:12px}
+.companies-content .segmented-control{display:flex;gap:4px;padding:4px;border-radius:8px;background:#f1f4f7}
+.companies-content .segmented-control button{border:0;background:transparent;border-radius:6px;padding:7px 10px;color:#637583;font-size:11px;cursor:pointer}
+.companies-content .segmented-control button.active{background:#fff;color:#12345a;box-shadow:0 1px 4px #152f4514}
+@media(max-width:680px){.companies-content .company-form-grid{grid-template-columns:1fr}.companies-content .form-field.wide{grid-column:auto}.companies-content .company-form{padding:0 14px 16px}.companies-content .panel-heading{padding:16px}.companies-toolbar .form-field{min-width:100%}.companies-content .form-actions{flex-direction:column-reverse}.companies-content .form-actions button{width:100%}}
