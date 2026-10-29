@@ -10,34 +10,19 @@
 2. Gerar uma chave de sessão com pelo menos 32 caracteres aleatórios e defini-la em `SESSION_SECRET`.
 3. Instalar dependências com `npm install`.
 4. Iniciar PostgreSQL com `docker compose up -d db`.
-5. Aplicar todas as migrações de `database/migrations/001_core_schema.sql` até `database/migrations/014_tax_rule_registry.sql`, por ordem numérica e sem saltar ficheiros.
+5. Aplicar todas as migrações de `database/migrations/001_core_schema.sql` até `database/migrations/016_commercial_operations.sql`, por ordem numérica e sem saltar ficheiros.
 6. Criar o administrador inicial definindo `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD` e, opcionalmente, `ADMIN_ORGANISATION` no ambiente. A palavra-passe deve ter pelo menos 14 caracteres. Executar `npm run bootstrap:admin` uma única vez.
 7. Iniciar a aplicação com `npm run dev`.
 8. Abrir `http://localhost:3000/login` e entrar com as credenciais criadas.
 
 ## Migrações
-Aplicar os ficheiros SQL com um cliente PostgreSQL, por exemplo:
+Aplicar os ficheiros SQL pela ordem numérica, incluindo as novas operações comerciais:
 ```sh
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/001_core_schema.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/002_auth.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/003_posting_controls.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/004_entity_access.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/005_reversal_controls.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/006_login_rate_limit.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/007_accounting_documents.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/008_accounting_tasks.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/009_monthly_close.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/010_password_reset.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/011_treasury_tax.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/012_treasury_accounting_integration.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/013_bank_statement_reconciliation.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/014_tax_rule_registry.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/016_commercial_operations.sql`, por ordem numérica
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/014_tax_rule_registry.sql
+for migration in database/migrations/*.sql; do
+  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+done
 ```
-A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e configurar a variável `DATABASE_URL`.
-
-- O fecho mensal usa uma checklist padrão por período e só permite encerrar quando os itens obrigatórios estão concluídos, não existem lançamentos em rascunho e os débitos igualam os créditos.
+A partir da raiz do repositório, depois de configurar `DATABASE_URL`. O workflow CI aplica e valida todas as migrações de 001 a 016.
 
 ## Preparação para produção
 - Seguir a checklist em `docs/PRODUCTION_READINESS.md` antes de disponibilizar o sistema a utilizadores reais.
