@@ -10,7 +10,7 @@
 2. Gerar uma chave de sessão com pelo menos 32 caracteres aleatórios e defini-la em `SESSION_SECRET`.
 3. Instalar dependências com `npm install`.
 4. Iniciar PostgreSQL com `docker compose up -d db`.
-5. Aplicar as migrações, pela ordem: `001_core_schema.sql`, `002_auth.sql`, `003_posting_controls.sql`, `004_entity_access.sql`, `005_reversal_controls.sql`, `006_login_rate_limit.sql` `007_accounting_documents.sql` `008_accounting_tasks.sql` e `009_monthly_close.sql` e `010_password_reset.sql`.
+5. Aplicar as migrações, pela ordem: `001_core_schema.sql`, `002_auth.sql`, `003_posting_controls.sql`, `004_entity_access.sql`, `005_reversal_controls.sql`, `006_login_rate_limit.sql` `007_accounting_documents.sql` `008_accounting_tasks.sql` e `009_monthly_close.sql` e `010_password_reset.sql` e `011_treasury_tax.sql`.
 6. Criar o administrador inicial definindo `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD` e, opcionalmente, `ADMIN_ORGANISATION` no ambiente. A palavra-passe deve ter pelo menos 14 caracteres. Executar `npm run bootstrap:admin` uma única vez.
 7. Iniciar a aplicação com `npm run dev`.
 8. Abrir `http://localhost:3000/login` e entrar com as credenciais criadas.
@@ -28,6 +28,7 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/007_accounting_do
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/008_accounting_tasks.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/009_monthly_close.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/010_password_reset.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/011_treasury_tax.sql
 ```
 A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e configurar a variável `DATABASE_URL`.
 
@@ -71,3 +72,10 @@ A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e conf
 - O estorno cria um novo lançamento inverso num período aberto e preserva o original no histórico. Aplicar a migração `005_reversal_controls.sql` antes de usar a funcionalidade.
 
 Estas instruções descrevem a configuração prevista; os comandos deverão ser executados num ambiente de desenvolvimento para confirmar a instalação. Não utilizar credenciais de exemplo em produção.
+
+ 
+## Tesouraria e fiscalidade
+- Aplicar a migração `011_treasury_tax.sql` depois das migrações 001–010.
+- `/tesouraria` permite registar contas de caixa/banco/carteira móvel, movimentos de entrada/saída e marcar movimentos como reconciliados. O movimento líquido é apenas um total dos movimentos registados; não equivale ao saldo real de caixa/banco nem inclui automaticamente o saldo inicial.
+- `/fiscalidade` mantém um calendário manual de obrigações fiscais e estados de preparação, submissão e pagamento. Os tipos disponíveis incluem IVA, IRPS, IRPC, ISPC, INSS e outros.
+- Estes módulos não geram ainda lançamentos contabilísticos automáticos, não calculam impostos nem submetem declarações. A aplicação de taxas e prazos deve ser validada face à legislação e às instruções vigentes em Moçambique.
