@@ -94,5 +94,8 @@ Nenhuma etapa é considerada concluída apenas porque a interface existe. Exige 
 - [x] Sugestões de correspondência por conta, valor, sentido, referência e proximidade de datas.
 - [x] Confirmação manual transaccional, prevenção de correspondências duplicadas e histórico de importações.
 - [x] Testes HTTP ponta a ponta de importação e reconciliação com utilizador autenticado, validação de datas, divergência de valores, prevenção de repetição e isolamento entre empresas.
-- [ ] Motor fiscal com regras versionadas, validação profissional e calendário legal actualizado de Moçambique.
+- [x] Estrutura do registo de regras fiscais versionadas, fonte HTTPS, vigência, workflow de revisão/aprovação, auditoria e motor de cálculo parametrizado sem taxas pré-carregadas (migração 014).
+- [x] API de simulação limitada a regra activa e data de vigência, com fonte e data de validação devolvidas; sem criação de obrigações ou lançamentos.
+- [ ] Carregar e validar regras legais reais de Moçambique com fontes oficiais, exemplos aprovados e revisão profissional antes de activação.
+- [ ] Acrescentar testes HTTP/integração de workflow fiscal e controlo de permissões.
 - [ ] Testes de integração específicos e revisão das permissões de tesouraria e fiscalidade.

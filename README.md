@@ -3,7 +3,7 @@
 Plataforma proprietária de gestão contabilística, fiscal e financeira, com foco inicial na operação local da ALINVEST e no mercado moçambicano.
 
 ## Estado
-Fundação, autenticação, gestão de empresas e primeiro MVP do núcleo contabilístico estão em desenvolvimento na branch `feature/company-management-auth`. A validação de CI e os testes com PostgreSQL ainda precisam de ser executados.
+Os módulos de empresas, contabilidade, arquivo documental, tarefas, fecho mensal, relatórios, tesouraria, calendário fiscal e reconciliação bancária estão implementados no MVP. Está em revisão a cobertura ponta a ponta da integração Tesouraria–Contabilidade e a nova base de regras fiscais versionadas.
 
 ## Stack prevista
 - Next.js + TypeScript
@@ -20,7 +20,7 @@ Fundação, autenticação, gestão de empresas e primeiro MVP do núcleo contab
 - Regras fiscais versionadas e sujeitas a validação profissional.
 
 ## Arranque
-Consulte `docs/DEVELOPMENT.md` para preparar a base de dados, aplicar as quatro migrações e criar o primeiro administrador. Consulte `docs/ROADMAP.md` para o plano de implementação.
+Consulte `docs/DEVELOPMENT.md` para preparar o ambiente, aplicar as migrações 001–014 e criar o primeiro administrador. Consulte `docs/ROADMAP.md` para o plano de implementação.
 
 ## Aviso
-Esta fundação não constitui certificação fiscal nem autorização para emissão de facturas oficiais. Os requisitos aplicáveis em Moçambique deverão ser validados antes de disponibilizar essas funções.
+O registo fiscal versionado e a simulação são uma fundação técnica, não uma interpretação legal validada. Não existem taxas legais pré-carregadas; a gestão do registo global exige uma concessão explícita em `platform_administrators`. Regras reais só devem ser activadas após confirmação de fonte normativa oficial, vigência e aprovação profissional. O sistema não constitui certificação fiscal nem autorização para emissão de facturas oficiais.
