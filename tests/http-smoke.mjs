@@ -316,8 +316,8 @@ try {
     method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
     body:JSON.stringify({entityId:adminEntity,ruleKey:taxRuleKey,baseAmount:1000,asOfDate:"2026-10-29"}),
   });
-  assert.equal(taxPreview.status,200,"regra activa e em vigência deve permitir simulação");
   const taxPreviewPayload = await taxPreview.json();
+  assert.equal(taxPreview.status,200,"regra activa e em vigência deve permitir simulação: " + JSON.stringify(taxPreviewPayload));
   assert.equal(taxPreviewPayload.preview.amount,100,"simulação deve usar a taxa explicitamente configurada na fixture");
   assert.equal(taxPreviewPayload.preview.version,1);
   assert.match(taxPreviewPayload.notice,/não cria obrigação/i);
