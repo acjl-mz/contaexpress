@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       company = created.rows[0];
       await client.query(
         `INSERT INTO audit_events (organisation_id, accounting_entity_id, actor_user_id, event_type, target_type, target_id, details)
-         VALUES ($1, $2, $3, 'company.created', 'accounting_entity', $2, $4::jsonb)`,
+         VALUES ($1, $2, $3, 'company.created', 'accounting_entity', $2::text, $4::jsonb)`,
         [user.organisationId, company.id, user.id, JSON.stringify({ legalName, countryCode, currency })],
       );
       await client.query("COMMIT");
