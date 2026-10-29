@@ -81,6 +81,11 @@ try {
 
   const anonymousPdf = await fetch(`${baseUrl}/api/accounting/reports/pdf?entityId=00000000-0000-0000-0000-000000000000`);
   assert.equal(anonymousPdf.status, 401, "exportação PDF deve exigir sessão");
+  const anonymousTreasury = await fetch(`${baseUrl}/api/treasury?entityId=00000000-0000-0000-0000-000000000000`);
+  assert.equal(anonymousTreasury.status, 401, "tesouraria deve exigir sessão");
+  const anonymousTax = await fetch(`${baseUrl}/api/tax/obligations?entityId=00000000-0000-0000-0000-000000000000`);
+  assert.equal(anonymousTax.status, 401, "fiscalidade deve exigir sessão");
+
 
   const login = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",
