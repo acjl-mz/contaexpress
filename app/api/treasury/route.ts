@@ -102,20 +102,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function PATCH(request: NextRequest) {
+export async function PATCH() {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: "Inicie sessão para continuar." }, { status: 401 });
-  if (!WRITE_ROLES.has(user.role)) return NextResponse.json({ error: "Não tem permissão para reconciliar movimentos." }, { status: 403 });
-  try {
-    const body = await request.json();
-    const entityId = clean(body.entityId,80), transactionId = clean(body.transactionId,80);
-    if (!entityId || !transactionId || !await allowed(user.id,entityId)) return NextResponse.json({ error: "Empresa ou movimento inválido." }, { status: 403 });
-    const result = await db.query(`UPDATE treasury_transactions SET status='reconciled',updated_at=now()
-      WHERE id=$1 AND accounting_entity_id=$2 AND status='recorded' RETURNING id,status`,[transactionId,entityId]);
-    if (!result.rowCount) return NextResponse.json({ error: "Movimento não encontrado ou já reconciliado." }, { status: 404 });
-    await db.query(`INSERT INTO audit_events (organisation_id,accounting_entity_id,actor_user_id,event_type,target_type,target_id,details)
-      SELECT organisation_id,$1,$2,'treasury.transaction.reconciled','treasury_transaction',$3,'{}'::jsonb FROM accounting_entities WHERE id=$1`,
-    [entityId,user.id,transactionId]);
-    return NextResponse.json({ transaction: result.rows[0] });
-  } catch(error) { console.error("Falha na reconciliação:",error); return NextResponse.json({error:"Não foi possível reconciliar o movimento."},{status:500}); }
+  return NextResponse.json({ error: "A reconciliação directa foi desactivada. Importe o extracto bancário e confirme a correspondência em Tesouraria > Reconciliação assistida." }, { status: 410 });
 }
