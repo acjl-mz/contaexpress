@@ -268,10 +268,10 @@ try {
   assert.equal(anonymousPrepare.status, 401, "preparação sem sessão deve ser rejeitada");
 
   const outsiderPrepare = await fetch(baseUrl + "/api/treasury/post", {
-    method: "POST", headers: { cookie: auditorCookie, "content-type": "application/json" },
-    body: JSON.stringify({ entityId: adminEntity, transactionId: postingTransaction }),
+    method: "POST", headers: { cookie: sessionCookie, "content-type": "application/json" },
+    body: JSON.stringify({ entityId: fixtureIds.entity, transactionId: postingTransaction }),
   });
-  assert.equal(outsiderPrepare.status, 403, "utilizador sem acesso à empresa não deve preparar lançamento");
+  assert.equal(outsiderPrepare.status, 403, "mesmo um superadministrador sem associação à empresa não deve preparar lançamento para ela");
 
   const prepareEntry = await fetch(baseUrl + "/api/treasury/post", {
     method: "POST", headers: { cookie: sessionCookie, "content-type": "application/json" },
