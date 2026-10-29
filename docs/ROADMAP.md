@@ -24,7 +24,8 @@
 - [x] Confirmação de lançamento com validação transaccional de débitos = créditos, período aberto e contas movimentáveis.
 - [x] Bloqueio de alteração e eliminação de lançamentos confirmados através de triggers.
 - [x] Primeira interface para plano de contas e diário geral.
-- [ ] Testes automatizados de integração com PostgreSQL e revisão contabilística do plano de contas.
+- [x] Teste de integração PostgreSQL para confirmação de lançamentos equilibrados, rejeição de lançamentos desequilibrados e imutabilidade após confirmação.
+- [ ] Revisão contabilística do plano de contas e ampliação dos testes de integração.
 - [x] Fluxo formal de estorno com lançamento inverso, referência ao original, auditoria e bloqueio de duplicação.
 - [ ] Testes automatizados de integração PostgreSQL para confirmar estornos, períodos fechados e concorrência.
 - [x] API e interface inicial do razão por conta e balancete de verificação, com filtros por data e exportação CSV.
