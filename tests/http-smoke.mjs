@@ -135,6 +135,25 @@ try {
   const pdfBytes = Buffer.from(await pdfResponse.arrayBuffer());
   assert.ok(pdfBytes.subarray(0, 8).toString("ascii").startsWith("%PDF-1."), "download deve conter um documento PDF válido");
 
+  const adminEntity = companyPayload.company.id;
+  const adminYear = (await fixtureClient.query("INSERT INTO fiscal_years (accounting_entity_id, label, starts_on, ends_on) VALUES ($1, 'HTTP-REVERSAL', '2026-01-01', '2026-12-31') RETURNING id", [adminEntity])).rows[0].id;
+  const adminPeriod = (await fixtureClient.query("INSERT INTO accounting_periods (accounting_entity_id, fiscal_year_id, label, starts_on, ends_on) VALUES ($1, $2, 'HTTP-REVERSAL', '2026-01-01', '2026-12-31') RETURNING id", [adminEntity, adminYear])).rows[0].id;
+  const adminJournal = (await fixtureClient.query("INSERT INTO accounting_journals (accounting_entity_id, code, name) VALUES ($1, 'HTTPREV', 'HTTP reversal test') RETURNING id", [adminEntity])).rows[0].id;
+  const adminDebit = (await fixtureClient.query("INSERT INTO chart_of_accounts (accounting_entity_id, code, name, account_type) VALUES ($1, 'HTTPREV-1', 'Banco', 'asset') RETURNING id", [adminEntity])).rows[0].id;
+  const adminCredit = (await fixtureClient.query("INSERT INTO chart_of_accounts (accounting_entity_id, code, name, account_type) VALUES ($1, 'HTTPREV-2', 'Capital', 'equity') RETURNING id", [adminEntity])).rows[0].id;
+  const originalEntry = (await fixtureClient.query("INSERT INTO journal_entries (accounting_entity_id, period_id, journal_id, entry_date, description, created_by) VALUES ($1, $2, $3, '2026-10-20', 'HTTP concurrent reversal', $4) RETURNING id", [adminEntity, adminPeriod, adminJournal, payload.user.id])).rows[0].id;
+  await fixtureClient.query("INSERT INTO journal_entry_lines (accounting_entity_id, entry_id, line_number, account_id, debit, credit) VALUES ($1, $2, 1, $3, 125, 0), ($1, $2, 2, $4, 0, 125)", [adminEntity, originalEntry, adminDebit, adminCredit]);
+  const postOriginal = await fetch(`${baseUrl}/api/accounting/entries/${encodeURIComponent(originalEntry)}/post?entityId=${encodeURIComponent(adminEntity)}`, { method: "POST", headers: { cookie: sessionCookie } });
+  assert.equal(postOriginal.status, 200, "lançamento de teste deve ser confirmado antes do estorno");
+  const reversals = await Promise.all([
+    fetch(`${baseUrl}/api/accounting/entries/${encodeURIComponent(originalEntry)}/reverse?entityId=${encodeURIComponent(adminEntity)}`, { method: "POST", headers: { cookie: sessionCookie, "content-type": "application/json" }, body: JSON.stringify({ reversalDate: "2026-10-21" }) }),
+    fetch(`${baseUrl}/api/accounting/entries/${encodeURIComponent(originalEntry)}/reverse?entityId=${encodeURIComponent(adminEntity)}`, { method: "POST", headers: { cookie: sessionCookie, "content-type": "application/json" }, body: JSON.stringify({ reversalDate: "2026-10-21" }) }),
+  ]);
+  const reversalStatuses = reversals.map(response => response.status).sort((a, b) => a - b);
+  assert.deepEqual(reversalStatuses, [201, 409], "pedidos simultâneos de estorno devem produzir exactamente um estorno");
+  const reversalCount = await fixtureClient.query("SELECT count(*)::int AS count FROM journal_entries WHERE accounting_entity_id = $1 AND reverses_entry_id = $2", [adminEntity, originalEntry]);
+  assert.equal(reversalCount.rows[0].count, 1, "a base de dados deve conter apenas um estorno do lançamento original");
+
   const logout = await fetch(`${baseUrl}/api/auth/logout`, {
     method: "POST",
     headers: { cookie: sessionCookie },
@@ -148,20 +167,23 @@ try {
   console.log("HTTP smoke tests: autenticação, sessão, acesso a empresas e logout verificados.");
 } finally {
   if (fixtureClient) {
+    await fixtureClient.query("SET session_replication_role = replica").catch(() => undefined);
     if (fixtureIds) {
       const f = fixtureIds;
-      await fixtureClient.query("DELETE FROM journal_entry_lines WHERE entry_id = $1", [f.entry]).catch(() => undefined);
-      await fixtureClient.query("DELETE FROM journal_entries WHERE id = $1", [f.entry]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM journal_entry_lines WHERE accounting_entity_id = $1", [f.entity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM journal_entries WHERE accounting_entity_id = $1", [f.entity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM audit_events WHERE accounting_entity_id = $1", [f.entity]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM chart_of_accounts WHERE accounting_entity_id = $1", [f.entity]).catch(() => undefined);
-      await fixtureClient.query("DELETE FROM accounting_journals WHERE id = $1", [f.journal]).catch(() => undefined);
-      await fixtureClient.query("DELETE FROM accounting_periods WHERE id = $1", [f.period]).catch(() => undefined);
-      await fixtureClient.query("DELETE FROM fiscal_years WHERE id = $1", [f.year]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM accounting_journals WHERE accounting_entity_id = $1", [f.entity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM accounting_periods WHERE accounting_entity_id = $1", [f.entity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM fiscal_years WHERE accounting_entity_id = $1", [f.entity]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM entity_memberships WHERE accounting_entity_id = $1", [f.entity]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM accounting_entities WHERE id = $1", [f.entity]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM organisation_memberships WHERE organisation_id = $1 AND user_id = $2", [f.org, f.user]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM app_users WHERE id = $1", [f.user]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM organisations WHERE id = $1", [f.org]).catch(() => undefined);
     }
+    await fixtureClient.query("SET session_replication_role = origin").catch(() => undefined);
     await fixtureClient.end().catch(() => undefined);
   }
   server.kill("SIGTERM");
