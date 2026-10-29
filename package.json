@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:unit": "node --test tests/report-validation.test.mjs tests/report-calculations.test.mjs tests/report-pdf.test.mjs",
-    "test:integration": "node --test tests/*.integration.test.mjs",
+    "test:integration": "node --test tests/*.integration.test.mjs tests/password-reset.integration.test.mjs",
     "bootstrap:admin": "node scripts/bootstrap-admin.mjs",
     "test:all": "npm run test:unit && npm run test:integration",
     "backup:db": "bash scripts/db-backup.sh",
