@@ -8,10 +8,13 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:unit": "node --test tests/report-validation.test.mjs tests/report-calculations.test.mjs",
+    "test:unit": "node --test tests/report-validation.test.mjs tests/report-calculations.test.mjs tests/report-pdf.test.mjs",
     "test:integration": "node --test tests/*.integration.test.mjs",
     "bootstrap:admin": "node scripts/bootstrap-admin.mjs",
-    "test:all": "npm run test:unit && npm run test:integration"
+    "test:all": "npm run test:unit && npm run test:integration",
+    "backup:db": "bash scripts/db-backup.sh",
+    "restore:db": "bash scripts/db-restore.sh",
+    "verify:db-restore": "bash scripts/db-verify.sh"
   },
   "dependencies": {
     "next": "^15.5.6",
