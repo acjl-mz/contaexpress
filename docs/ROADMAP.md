@@ -78,3 +78,15 @@
 
 ## Critérios de passagem
 Nenhuma etapa é considerada concluída apenas porque a interface existe. Exige validação funcional, testes e documentação. Cálculos fiscais, processamento salarial e emissão de facturas oficiais requerem validação especializada e confirmação dos requisitos legais aplicáveis.
+
+ 
+## Etapa 6 — Tesouraria e fiscalidade
+- [x] Registo de contas de caixa, bancos e carteiras móveis por empresa.
+- [x] Registo de entradas e saídas, categorias, contraparte, referência e estado de reconciliação.
+- [x] Calendário de obrigações fiscais com tipo, período, prazo, valor previsto, referência e estado.
+- [x] Controlo de acesso por sessão e empresa, validação dos dados e auditoria das operações.
+- [x] Interfaces de tesouraria e fiscalidade e ligação à navegação principal.
+- [ ] Integração de movimentos com lançamentos contabilísticos, com regras de correspondência e prevenção de duplicação.
+- [ ] Importação de extractos bancários e reconciliação automática/assistida.
+- [ ] Motor fiscal com regras versionadas, validação profissional e calendário legal actualizado de Moçambique.
+- [ ] Testes de integração específicos e revisão das permissões de tesouraria e fiscalidade.
