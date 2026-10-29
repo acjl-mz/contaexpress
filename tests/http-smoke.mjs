@@ -249,7 +249,7 @@ try {
     [adminEntity],
   )).rows[0].id;
   const treasuryCounterpart = (await fixtureClient.query(
-    "INSERT INTO chart_of_accounts (accounting_entity_id,code,name,account_type) VALUES ($1,'HTTPTR-2','Receita - integração','revenue') RETURNING id",
+    "INSERT INTO chart_of_accounts (accounting_entity_id,code,name,account_type) VALUES ($1,'HTTPTR-2','Receita - integração','income') RETURNING id",
     [adminEntity],
   )).rows[0].id;
   await fixtureClient.query(
@@ -386,9 +386,10 @@ try {
       await fixtureClient.query("DELETE FROM organisations WHERE id = $1", [f.org]).catch(() => undefined);
       if (f.adminEntity) {
         await fixtureClient.query("DELETE FROM bank_statement_lines WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
-      await fixtureClient.query("DELETE FROM bank_statement_imports WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
-      await fixtureClient.query("DELETE FROM treasury_transactions WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
-      await fixtureClient.query("DELETE FROM treasury_accounts WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM bank_statement_imports WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM treasury_transactions WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM treasury_posting_mappings WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM treasury_accounts WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM journal_entry_lines WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
         await fixtureClient.query("DELETE FROM journal_entries WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
         await fixtureClient.query("DELETE FROM audit_events WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
