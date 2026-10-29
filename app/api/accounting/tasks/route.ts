@@ -8,7 +8,6 @@ export const dynamic = "force-dynamic";
 const CATEGORIES = new Set(["documents", "bookkeeping", "tax", "payroll", "reconciliation", "monthly_close", "other"]);
 const STATUSES = new Set(["pending", "in_progress", "blocked", "completed", "cancelled"]);
 const PRIORITIES = new Set(["low", "normal", "high", "urgent"]);
-const ROLES = new Set(["superadmin", "client_manager", "accountant", "tax_officer", "payroll_officer", "finance_manager", "client_director", "auditor", "document_manager"]);
 
 function clean(value: unknown, max: number) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
