@@ -11,6 +11,10 @@ const TAX_TYPES = new Set(["IVA", "IRPS", "IRPC", "ISPC", "INSS", "IRRM", "OTHER
 const METHODS = new Set(["percentage_of_base", "fixed_amount", "progressive_brackets", "manual"]);
 const STATUSES = new Set(["draft", "in_review", "approved", "active", "retired"]);
 const clean = (value: unknown, max = 300) => typeof value === "string" ? value.trim().slice(0, max) : "";
+const isPlatformAdmin = async (userId: string) => {
+  const result = await db.query("SELECT EXISTS (SELECT 1 FROM platform_administrators WHERE user_id=$1) AS allowed", [userId]);
+  return Boolean(result.rows[0]?.allowed);
+};
 
 function isRealDate(value: unknown): value is string {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -44,7 +48,7 @@ export async function GET(request: NextRequest) {
        LIMIT 500`,
       [status, taxType],
     );
-    return NextResponse.json({ rules: result.rows });
+    return NextResponse.json({ rules: result.rows, permissions: { canManage: await isPlatformAdmin(user.id) } });
   } catch (error) {
     console.error("Falha ao consultar regras fiscais versionadas:", error);
     return NextResponse.json({ error: "Não foi possível carregar o registo de regras fiscais." }, { status: 500 });
@@ -55,6 +59,7 @@ export async function POST(request: NextRequest) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: "Inicie sessão para registar uma regra fiscal." }, { status: 401 });
   if (!WRITE_ROLES.has(user.role)) return NextResponse.json({ error: "Só os responsáveis fiscais autorizados podem criar versões de regras." }, { status: 403 });
+  if (!await isPlatformAdmin(user.id)) return NextResponse.json({ error: "O registo de regras fiscais é global. É necessário um acesso explícito de administração da plataforma." }, { status: 403 });
 
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Corpo do pedido inválido." }, { status: 400 });
