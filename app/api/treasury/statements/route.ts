@@ -18,15 +18,16 @@ export async function GET(request: NextRequest) {
   if (!entityId) return NextResponse.json({ error: "Seleccione uma empresa." }, { status: 400 });
   try {
     if (!await allowed(user.id, entityId)) return NextResponse.json({ error: "Não tem acesso a esta empresa." }, { status: 403 });
+    const accounts = await db.query("SELECT id,name,account_type AS \"accountType\",currency FROM treasury_accounts WHERE accounting_entity_id=$1 AND is_active AND account_type='bank' ORDER BY name", [entityId]);
     const result = await db.query(`
       SELECT l.id, l.import_id AS "importId", i.file_name AS "fileName",
-        l.treasury_account_id AS "accountId", a.name AS "accountName",
-        l.line_date AS "lineDate", l.description, l.direction, l.amount, l.reference,
-        l.status, l.treasury_transaction_id AS "transactionId",
+        l.line_number AS "lineNumber", l.treasury_account_id AS "accountId", a.name AS "accountName",
+        l.line_date AS "transactionDate", l.description, l.direction, l.amount, l.reference,
+        l.status, l.treasury_transaction_id AS "matchedTransactionId",
         l.matched_at AS "matchedAt", l.created_at AS "createdAt",
-        t.transaction_date AS "matchedTransactionDate", t.description AS "matchedTransactionDescription",
-        t.amount AS "matchedTransactionAmount",
-        COALESCE(candidates.matches, '[]'::json) AS candidates
+        t.transaction_date AS "matchedDate", t.description AS "matchedDescription",
+        t.amount AS "matchedAmount",
+        COALESCE(candidates.matches, '[]'::json) AS suggestions
       FROM bank_statement_lines l
       JOIN bank_statement_imports i ON i.id=l.import_id AND i.accounting_entity_id=l.accounting_entity_id
       JOIN treasury_accounts a ON a.id=l.treasury_account_id AND a.accounting_entity_id=l.accounting_entity_id
@@ -54,15 +55,15 @@ export async function GET(request: NextRequest) {
     `, [entityId]);
     const imports = await db.query(`
       SELECT i.id, i.file_name AS "fileName", i.treasury_account_id AS "accountId",
-        a.name AS "accountName", i.row_count AS "rowCount", i.created_at AS "createdAt",
-        COUNT(l.id)::int AS "matchedCount"
+        a.name AS "accountName", i.row_count AS "lineCount", i.created_at AS "importedAt",
+        COUNT(l.id)::int AS "totalLines", COUNT(l.id) FILTER (WHERE l.status='matched')::int AS "matchedLines"
       FROM bank_statement_imports i
       JOIN treasury_accounts a ON a.id=i.treasury_account_id AND a.accounting_entity_id=i.accounting_entity_id
       LEFT JOIN bank_statement_lines l ON l.import_id=i.id AND l.accounting_entity_id=i.accounting_entity_id AND l.status='matched'
       WHERE i.accounting_entity_id=$1
       GROUP BY i.id,a.name ORDER BY i.created_at DESC LIMIT 100
     `, [entityId]);
-    return NextResponse.json({ lines: result.rows, imports: imports.rows });
+    return NextResponse.json({ accounts: accounts.rows, lines: result.rows, imports: imports.rows });
   } catch (error) {
     console.error("Falha ao consultar extractos bancários:", error);
     return NextResponse.json({ error: "Não foi possível consultar os extractos bancários." }, { status: 500 });
