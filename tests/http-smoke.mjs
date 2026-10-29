@@ -156,6 +156,22 @@ try {
   const reversalCount = await fixtureClient.query("SELECT count(*)::int AS count FROM journal_entries WHERE accounting_entity_id = $1 AND reverses_entry_id = $2", [adminEntity, originalEntry]);
   assert.equal(reversalCount.rows[0].count, 1, "a base de dados deve conter apenas um estorno do lançamento original");
 
+  const limitedEmail = `rate-limit-${Date.now()}@example.test`;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const response = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-forwarded-for": "198.51.100.77" },
+      body: JSON.stringify({ email: limitedEmail, password: "incorrect-password-for-rate-limit-test" }),
+    });
+    assert.equal(response.status, 401, `tentativa inválida ${attempt + 1} deve ser recusada antes do limite`);
+  }
+  const rateLimited = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": "198.51.100.77" },
+    body: JSON.stringify({ email: limitedEmail, password: "incorrect-password-for-rate-limit-test" }),
+  });
+  assert.equal(rateLimited.status, 429, "login deve bloquear novas tentativas depois de atingir o limite por e-mail");
+
   const logout = await fetch(`${baseUrl}/api/auth/logout`, {
     method: "POST",
     headers: { cookie: sessionCookie },
