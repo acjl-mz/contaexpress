@@ -92,6 +92,8 @@ try {
     body: JSON.stringify({ entityId: "00000000-0000-0000-0000-000000000000", transactionId: "00000000-0000-0000-0000-000000000000" }),
   });
   assert.equal(anonymousPosting.status, 401, "preparação contabilística deve exigir sessão");
+  const anonymousStatements = await fetch(baseUrl + "/api/treasury/statements?entityId=00000000-0000-0000-0000-000000000000");
+  assert.equal(anonymousStatements.status, 401, "extractos bancários devem exigir sessão");
 
 
   const login = await fetch(`${baseUrl}/api/auth/login`, {
