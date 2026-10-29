@@ -60,7 +60,7 @@ A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e conf
 - Não publicar `.env`, credenciais ou segredos de sessão.
 - Usar uma `SESSION_SECRET` aleatória com pelo menos 32 caracteres.
 - Usar HTTPS em produção e definir `DATABASE_SSL=true` quando a base de dados remota exigir TLS.
-- O bootstrap recusa criar um utilizador quando o e-mail já existe; não é um mecanismo de recuperação de palavra-passe.
+- O bootstrap recusa criar um utilizador quando o e-mail já existe; não é um mecanismo de recuperação de palavra-passe. Na instalação inicial, o administrador criado passa a ser administrador da plataforma para gerir o registo global de regras fiscais.
 - O login limita tentativas falhadas por e-mail e endereço IP numa janela de 15 minutos; aplicar a migração `006_login_rate_limit.sql`. A identificação do IP depende dos cabeçalhos confiáveis do proxy/plataforma de alojamento.
 - O arquivo documental aceita PDF, JPG, PNG, CSV, XLSX e DOCX até 8 MB, exige acesso à empresa e guarda os ficheiros em PostgreSQL; aplicar `007_accounting_documents.sql`.
 - O módulo de tarefas mantém histórico de criação e actualizações, estados, prioridade e prazo; aplicar `008_accounting_tasks.sql`.
@@ -82,6 +82,7 @@ Estas instruções descrevem a configuração prevista; os comandos deverão ser
 - `/tesouraria` permite registar contas de caixa/banco/carteira móvel, movimentos de entrada/saída e marcar movimentos como reconciliados. O movimento líquido é apenas um total dos movimentos registados; não equivale ao saldo real de caixa/banco nem inclui automaticamente o saldo inicial.
 - `/fiscalidade` mantém um calendário manual de obrigações fiscais e estados de preparação, submissão e pagamento. Os tipos disponíveis incluem IVA, IRPS, IRPC, ISPC, INSS e outros.
 - O calendário de obrigações continua manual. O registo fiscal versionado permite guardar fonte legal, vigência e aprovações; não são pré-carregadas taxas. A simulação só usa versões activas e validadas, não cria lançamentos ou declarações e requer revisão profissional antes do uso real.
+- As regras fiscais são referências globais partilhadas. O primeiro administrador criado pelo bootstrap recebe acesso de plataforma; um superadministrador de uma organização não obtém automaticamente esse privilégio. Em instalações existentes após a migração 014, um operador de base de dados deve conceder explicitamente acesso em `platform_administrators`, mediante procedimento interno aprovado, e registar o motivo. Conceda o mesmo acesso a um segundo revisor autorizado apenas quando necessário.
 
 
 ## Integração de Tesouraria com Contabilidade
