@@ -16,7 +16,7 @@
 - [x] Teste HTTP de rate limiting: após oito tentativas falhadas para o mesmo e-mail, novas tentativas são limitadas com HTTP 429.
 - [ ] Testes concorrentes do rate limiting e limitação distribuída sob múltiplas instâncias.
 - [x] Fluxo de pedido e confirmação de recuperação de palavra-passe com token de uso único, expiração de 30 minutos e invalidação de sessões anteriores (migração 010).
-- [ ] Fluxo de convite e alteração de palavra-passe autenticada.
+- [x] Convites de organização com token de uso único, expiração, criação de conta, associação segura, auditoria e controlo de perfis (migração 015); testes HTTP de acesso anónimo e rejeição de tokens inválidos.\n- [ ] Alteração de palavra-passe autenticada pelo próprio utilizador.
 - [x] Teste de integração PostgreSQL para isolamento multempresa e concessão/revogação de acesso explícito por entidade.
 - [x] Teste de integração PostgreSQL para impedir confirmação por auditores e validar numeração sequencial por diário.
 - [x] Testes HTTP de fumo para login, credenciais inválidas, sessão, acesso à listagem de empresas e logout.
@@ -89,7 +89,7 @@ Nenhuma etapa é considerada concluída apenas porque a interface existe. Exige 
 - [x] Mapeamento por conta de tesouraria, direcção e categoria para contas do razão.
 - [x] Preparação transaccional de rascunhos contabilísticos equilibrados, com ligação ao movimento original e prevenção de duplicação.
 - [x] Testes de schema para o vínculo contabilístico e smoke tests de autenticação dos endpoints de mapeamento e preparação.
-- [ ] Confirmação de lançamento a partir da tesouraria e validação de permissões de ponta a ponta com sessão autenticada.
+- [x] Preparação de rascunho contabilístico a partir da tesouraria com sessão autenticada, bloqueio sem mapeamento, validação das contas, lançamento equilibrado, prevenção de duplicação e auditoria; cobertura HTTP no CI.\n- [ ] Confirmação final do lançamento a partir da tesouraria (continua deliberadamente no diário geral, após revisão).
 - [x] Importação CSV de extractos bancários com validação de linhas, limite de tamanho e registo de auditoria.
 - [x] Sugestões de correspondência por conta, valor, sentido, referência e proximidade de datas.
 - [x] Confirmação manual transaccional, prevenção de correspondências duplicadas e histórico de importações.
@@ -97,5 +97,5 @@ Nenhuma etapa é considerada concluída apenas porque a interface existe. Exige 
 - [x] Estrutura do registo de regras fiscais versionadas, fonte HTTPS, vigência, workflow de revisão/aprovação, auditoria e motor de cálculo parametrizado sem taxas pré-carregadas (migração 014).
 - [x] API de simulação limitada a regra activa e data de vigência, com fonte e data de validação devolvidas; sem criação de obrigações ou lançamentos.
 - [ ] Carregar e validar regras legais reais de Moçambique com fontes oficiais, exemplos aprovados e revisão profissional antes de activação.
-- [ ] Acrescentar testes HTTP/integração de workflow fiscal e controlo de permissões.
+- [x] Testes HTTP do workflow fiscal: rascunho, revisão independente, aprovação, activação, simulação e retirada; testes de acesso global e bloqueio de regras não aprovadas.\n- [ ] Ampliar os testes de integração fiscal com cenários legais moçambicanos validados por profissional.
 - [ ] Testes de integração específicos e revisão das permissões de tesouraria e fiscalidade.
