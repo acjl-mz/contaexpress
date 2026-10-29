@@ -56,8 +56,9 @@ export async function POST(request:NextRequest) {
       await client.query("BEGIN");
       const treasury=await client.query("SELECT id FROM treasury_accounts WHERE id=$1 AND accounting_entity_id=$2 AND is_active FOR UPDATE",[treasuryAccountId,entityId]);
       if(!treasury.rowCount){await client.query("ROLLBACK");return NextResponse.json({error:"A conta de tesouraria não existe ou está inactiva."},{status:400});}
-      const ledger=await client.query("SELECT id FROM chart_of_accounts WHERE id=ANY($1::uuid[]) AND accounting_entity_id=$2 AND is_active AND is_postable",[ [ledgerAccountId,counterpartAccountId],entityId]);
+      const ledger=await client.query("SELECT id,account_type FROM chart_of_accounts WHERE id=ANY($1::uuid[]) AND accounting_entity_id=$2 AND is_active AND is_postable",[ [ledgerAccountId,counterpartAccountId],entityId]);
       if(ledger.rowCount!==2){await client.query("ROLLBACK");return NextResponse.json({error:"As duas contas devem pertencer à empresa e permitir movimentos."},{status:400});}
+      if(!ledger.rows.some((row:{id:string;account_type:string})=>row.id===ledgerAccountId&&row.account_type==="asset")){await client.query("ROLLBACK");return NextResponse.json({error:"A conta contabilística associada à tesouraria deve ser uma conta de activo."},{status:400});}
       const result=await client.query(`INSERT INTO treasury_posting_mappings
         (accounting_entity_id,treasury_account_id,direction,category,ledger_account_id,counterpart_account_id,created_by)
         VALUES ($1,$2,$3,$4,$5,$6,$7)
