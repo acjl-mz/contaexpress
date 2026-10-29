@@ -33,6 +33,10 @@ A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e conf
 
 - O fecho mensal usa uma checklist padrão por período e só permite encerrar quando os itens obrigatórios estão concluídos, não existem lançamentos em rascunho e os débitos igualam os créditos.
 
+## Preparação para produção
+- Seguir a checklist em `docs/PRODUCTION_READINESS.md` antes de disponibilizar o sistema a utilizadores reais.
+- O workflow de backup cifrado está inactivo até definir a variável de repositório `BACKUP_ENABLED=true`; sem os segredos de acesso e cifragem, não existe cópia externa automática.
+
 ## Verificações
 - `npm run test:unit` — testes puros de validação de datas, cálculos dos relatórios e geração estrutural de PDF.
 - `npm run test:all` — executa primeiro todos os testes unitários e depois os testes de integração PostgreSQL, incluindo a confirmação concorrente de um lançamento.
