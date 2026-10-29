@@ -33,7 +33,8 @@
 - [x] Interface de relatórios com balancete, balanço, demonstração de resultados, diário e razão por conta.
 - [x] Exportação CSV dos relatórios apresentados.
 - [x] Validação reutilizável de datas e testes unitários para datas impossíveis e intervalos invertidos.
-- [ ] Reconciliação independente dos saldos e testes automatizados dos cálculos dos relatórios.
+- [x] Testes unitários dos cálculos do balancete, demonstração de resultados e reconciliação do balanço com dados controlados.
+- [ ] Testes de integração PostgreSQL para validar consultas, estornos e saldos de abertura.
 
 ## Etapa 4 — Documentos e acompanhamento
 - [x] Arquivo documental com metadados, hash SHA-256 e acesso controlado por empresa.
