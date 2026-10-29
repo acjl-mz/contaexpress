@@ -10,7 +10,7 @@
 2. Gerar uma chave de sessão com pelo menos 32 caracteres aleatórios e defini-la em `SESSION_SECRET`.
 3. Instalar dependências com `npm install`.
 4. Iniciar PostgreSQL com `docker compose up -d db`.
-5. Aplicar todas as migrações de `database/migrations/001_core_schema.sql` até `database/migrations/013_bank_statement_reconciliation.sql`, por ordem numérica e sem saltar ficheiros.
+5. Aplicar todas as migrações de `database/migrations/001_core_schema.sql` até `database/migrations/014_tax_rule_registry.sql`, por ordem numérica e sem saltar ficheiros.
 6. Criar o administrador inicial definindo `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD` e, opcionalmente, `ADMIN_ORGANISATION` no ambiente. A palavra-passe deve ter pelo menos 14 caracteres. Executar `npm run bootstrap:admin` uma única vez.
 7. Iniciar a aplicação com `npm run dev`.
 8. Abrir `http://localhost:3000/login` e entrar com as credenciais criadas.
@@ -31,6 +31,7 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/010_password_rese
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/011_treasury_tax.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/012_treasury_accounting_integration.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/013_bank_statement_reconciliation.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/014_tax_rule_registry.sql
 ```
 A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e configurar a variável `DATABASE_URL`.
 
@@ -41,7 +42,7 @@ A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e conf
 - O workflow de backup cifrado está inactivo até definir a variável de repositório `BACKUP_ENABLED=true`; sem os segredos de acesso e cifragem, não existe cópia externa automática.
 
 ## Verificações
-- `npm run test:unit` — testes puros de validação de datas, cálculos dos relatórios e geração estrutural de PDF.
+- `npm run test:unit` — testes puros de validação de datas, cálculos dos relatórios, geração estrutural de PDF e motor fiscal versionado.
 - `npm run test:all` — executa primeiro todos os testes unitários e depois os testes de integração PostgreSQL, incluindo a confirmação concorrente de um lançamento.
 - `npm run test:integration` — testes PostgreSQL de lançamentos, relatórios, estornos, permissões, isolamento multempresa e idempotência do fecho mensal; requer `DATABASE_URL` e todas as migrações aplicadas. As suites criam dados de teste em transacções e revertem-nos no final.
 - `npm run typecheck`
@@ -54,13 +55,12 @@ A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e conf
 ## Recuperação de palavra-passe
 - Configurar `APP_BASE_URL`, `RESEND_API_KEY` e `RESEND_FROM_EMAIL` para activar o envio de links de recuperação através da API Resend. O endpoint responde sempre com uma mensagem genérica para não revelar se o e-mail existe.
 - Os links expiram em 30 minutos, são de uso único e o token é armazenado apenas como hash. A redefinição incrementa `session_version`, invalidando sessões anteriores. Aplicar a migração `010_password_reset.sql`.
-- Os convites de organização usam tokens aleatórios, armazenados apenas como hash SHA-256, expiram em 48 horas e são enviados por e-mail. Apenas superadministradores e gestores autorizados podem convidar; o convite não concede perfil de superadministrador nem associa contas existentes. Aplicar `015_organisation_invitations.sql` e configurar `RESEND_API_KEY`, `RESEND_FROM_EMAIL` e `APP_BASE_URL`. A aceitação só deve criar a conta e associação após validação do token e definição da palavra-passe.\n- Em `/perfil/seguranca`, o utilizador autenticado pode alterar a palavra-passe após confirmar a actual. A API exige 14–200 caracteres, impede a reutilização da palavra-passe actual, invalida as sessões antigas e os links de recuperação pendentes, audita a operação e renova a sessão do navegador actual. A função usa a coluna `session_version` criada pela migração 010; não requer nova migração.
 
 ## Segurança
 - Não publicar `.env`, credenciais ou segredos de sessão.
 - Usar uma `SESSION_SECRET` aleatória com pelo menos 32 caracteres.
 - Usar HTTPS em produção e definir `DATABASE_SSL=true` quando a base de dados remota exigir TLS.
-- O bootstrap recusa criar um utilizador quando o e-mail já existe; não é um mecanismo de recuperação de palavra-passe.
+- O bootstrap recusa criar um utilizador quando o e-mail já existe; não é um mecanismo de recuperação de palavra-passe. Na instalação inicial, o administrador criado passa a ser administrador da plataforma para gerir o registo global de regras fiscais.
 - O login limita tentativas falhadas por e-mail e endereço IP numa janela de 15 minutos; aplicar a migração `006_login_rate_limit.sql`. A identificação do IP depende dos cabeçalhos confiáveis do proxy/plataforma de alojamento.
 - O arquivo documental aceita PDF, JPG, PNG, CSV, XLSX e DOCX até 8 MB, exige acesso à empresa e guarda os ficheiros em PostgreSQL; aplicar `007_accounting_documents.sql`.
 - O módulo de tarefas mantém histórico de criação e actualizações, estados, prioridade e prazo; aplicar `008_accounting_tasks.sql`.
@@ -79,10 +79,20 @@ Estas instruções descrevem a configuração prevista; os comandos deverão ser
  
 ## Tesouraria e fiscalidade
 - Aplicar a migração `011_treasury_tax.sql` depois das migrações 001–010.
-- `/tesouraria` permite registar contas de caixa/banco/carteira móvel, movimentos e extractos bancários. O movimento líquido é apenas o total dos movimentos registados; não equivale ao saldo real nem inclui automaticamente o saldo inicial.
-- Com as migrações 012 e 013 aplicadas, os movimentos de tesouraria podem gerar rascunhos contabilísticos através de mapeamentos explícitos. A confirmação continua a exigir revisão e acção de um contabilista autorizado.
-- `/fiscalidade` mantém um calendário manual de obrigações fiscais e estados de preparação, submissão e pagamento. Os tipos incluem IVA, IRPS, IRPC, ISPC, INSS e outros.
-- O sistema ainda não calcula automaticamente impostos nem submete declarações fiscais. Taxas, prazos e regras devem ser validados face à legislação vigente em Moçambique.
+- `/tesouraria` permite registar contas de caixa/banco/carteira móvel, movimentos de entrada/saída e marcar movimentos como reconciliados. O movimento líquido é apenas um total dos movimentos registados; não equivale ao saldo real de caixa/banco nem inclui automaticamente o saldo inicial.
+- `/fiscalidade` mantém um calendário manual de obrigações fiscais e estados de preparação, submissão e pagamento. Os tipos disponíveis incluem IVA, IRPS, IRPC, ISPC, INSS e outros.
+- O calendário de obrigações continua manual. O registo fiscal versionado permite guardar fonte legal, vigência e aprovações; não são pré-carregadas taxas. A simulação só usa versões activas e validadas, não cria lançamentos ou declarações e requer revisão profissional antes do uso real.
+- As regras fiscais são referências globais partilhadas. O primeiro administrador criado pelo bootstrap recebe acesso de plataforma; um superadministrador de uma organização não obtém automaticamente esse privilégio.
+- Em instalações existentes após a migração 014, um operador de base de dados deve conceder explicitamente acesso em `platform_administrators` a uma pessoa aprovada, usando uma ligação administrativa confiável e registando o motivo. Exemplo para nomear o responsável inicial (substitua o e-mail):
+  ```sql
+  INSERT INTO platform_administrators (user_id, granted_by_user_id, note)
+  SELECT u.id, u.id, 'Nomeação inicial aprovada pelo operador da instalação'
+  FROM app_users u
+  JOIN organisation_memberships om ON om.user_id = u.id AND om.role = 'superadmin'
+  WHERE lower(u.email) = lower('admin@example.com')
+  ON CONFLICT (user_id) DO NOTHING;
+  ```
+  Para nomear um segundo revisor, use o mesmo mecanismo, definindo `granted_by_user_id` como o ID de um administrador de plataforma já autorizado. Não conceda acesso global automaticamente a todos os superadministradores de empresas.
 
 
 ## Integração de Tesouraria com Contabilidade
