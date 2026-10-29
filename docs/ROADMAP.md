@@ -16,8 +16,7 @@
 - [x] Teste HTTP de rate limiting: após oito tentativas falhadas para o mesmo e-mail, novas tentativas são limitadas com HTTP 429.
 - [ ] Testes concorrentes do rate limiting e limitação distribuída sob múltiplas instâncias.
 - [x] Fluxo de pedido e confirmação de recuperação de palavra-passe com token de uso único, expiração de 30 minutos e invalidação de sessões anteriores (migração 010).
-- [x] Fluxo de convite de utilizadores com token aleatório de uso único, expiração em 48 horas, e-mail de convite, criação da conta com palavra-passe definida pelo convidado, associação à organização, controlo de perfil, auditoria e página de aceitação. Não permite convidar superadministradores nem associar contas existentes.
-- [x] Alteração autenticada da palavra-passe com confirmação da credencial actual, invalidação das outras sessões e links de recuperação pendentes, auditoria e teste HTTP ponta a ponta.
+- [ ] Fluxo de convite e alteração de palavra-passe autenticada.
 - [x] Teste de integração PostgreSQL para isolamento multempresa e concessão/revogação de acesso explícito por entidade.
 - [x] Teste de integração PostgreSQL para impedir confirmação por auditores e validar numeração sequencial por diário.
 - [x] Testes HTTP de fumo para login, credenciais inválidas, sessão, acesso à listagem de empresas e logout.
@@ -95,5 +94,8 @@ Nenhuma etapa é considerada concluída apenas porque a interface existe. Exige 
 - [x] Sugestões de correspondência por conta, valor, sentido, referência e proximidade de datas.
 - [x] Confirmação manual transaccional, prevenção de correspondências duplicadas e histórico de importações.
 - [x] Testes HTTP ponta a ponta de importação e reconciliação com utilizador autenticado, validação de datas, divergência de valores, prevenção de repetição e isolamento entre empresas.
-- [ ] Motor fiscal com regras versionadas, validação profissional e calendário legal actualizado de Moçambique.
+- [x] Estrutura do registo de regras fiscais versionadas, fonte HTTPS, vigência, workflow de revisão/aprovação, auditoria e motor de cálculo parametrizado sem taxas pré-carregadas (migração 014).
+- [x] API de simulação limitada a regra activa e data de vigência, com fonte e data de validação devolvidas; sem criação de obrigações ou lançamentos.
+- [ ] Carregar e validar regras legais reais de Moçambique com fontes oficiais, exemplos aprovados e revisão profissional antes de activação.
+- [ ] Acrescentar testes HTTP/integração de workflow fiscal e controlo de permissões.
 - [ ] Testes de integração específicos e revisão das permissões de tesouraria e fiscalidade.
