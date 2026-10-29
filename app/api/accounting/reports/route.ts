@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { validDateRange } from "@/lib/accounting/report-validation.mjs";
+import { calculateBalanceSheet, calculateIncomeStatement, calculateTrialBalance } from "@/lib/accounting/report-calculations.mjs";
 
 export const runtime = "nodejs";
 
@@ -119,12 +120,6 @@ export async function GET(request: NextRequest) {
          ORDER BY a.code`,
         [entityId, to],
       );
-      const accounts = result.rows.map((row) => {
-        const debit = Number(row.debit);
-        const credit = Number(row.credit);
-        const balance = row.accountType === "asset" ? debit - credit : credit - debit;
-        return { ...row, debit, credit, balance: Number(balance.toFixed(2)) };
-      }).filter((row) => Math.abs(row.balance) > 0.005);
       const earnings = await db.query(
         `SELECT COALESCE(SUM(CASE WHEN a.account_type = 'income' THEN l.credit - l.debit
                                   WHEN a.account_type = 'expense' THEN l.debit - l.credit ELSE 0 END), 0)::numeric(20,2) AS result
@@ -135,16 +130,8 @@ export async function GET(request: NextRequest) {
            AND a.account_type IN ('income', 'expense') AND ($2::date IS NULL OR e.entry_date <= $2::date)`,
         [entityId, to],
       );
-      const assets = Number(accounts.filter(a => a.accountType === "asset").reduce((sum, a) => sum + a.balance, 0).toFixed(2));
-      const liabilities = Number(accounts.filter(a => a.accountType === "liability").reduce((sum, a) => sum + a.balance, 0).toFixed(2));
-      const equity = Number(accounts.filter(a => a.accountType === "equity").reduce((sum, a) => sum + a.balance, 0).toFixed(2));
-      const accumulatedResult = Number(earnings.rows[0]?.result ?? 0);
-      return NextResponse.json({
-        report, asOf: to, accounts, accumulatedResult,
-        totals: { assets, liabilities, equity, accumulatedResult,
-          liabilitiesAndEquity: Number((liabilities + equity + accumulatedResult).toFixed(2)),
-          difference: Number((assets - liabilities - equity - accumulatedResult).toFixed(2)) },
-      });
+      const calculated = calculateBalanceSheet(result.rows, earnings.rows[0]?.result ?? 0);
+      return NextResponse.json({ report, asOf: to, ...calculated });
     }
 
     if (report === "income-statement") {
@@ -164,15 +151,8 @@ export async function GET(request: NextRequest) {
          ORDER BY a.code`,
         [entityId, from, to],
       );
-      const accounts = result.rows.map((row) => {
-        const debit = Number(row.debit);
-        const credit = Number(row.credit);
-        const amount = row.accountType === "income" ? credit - debit : debit - credit;
-        return { ...row, debit, credit, amount: Number(amount.toFixed(2)) };
-      }).filter((row) => Math.abs(row.amount) > 0.005);
-      const income = Number(accounts.filter(a => a.accountType === "income").reduce((sum, a) => sum + a.amount, 0).toFixed(2));
-      const expenses = Number(accounts.filter(a => a.accountType === "expense").reduce((sum, a) => sum + a.amount, 0).toFixed(2));
-      return NextResponse.json({ report, from, to, accounts, totals: { income, expenses, netResult: Number((income-expenses).toFixed(2)) } });
+      const calculated = calculateIncomeStatement(result.rows);
+      return NextResponse.json({ report, from, to, ...calculated });
     }
 
     const result = await db.query(
@@ -191,21 +171,11 @@ export async function GET(request: NextRequest) {
        ORDER BY a.code`,
       [entityId, from, to],
     );
-    const accounts = result.rows.map((row) => ({
-      ...row,
-      debit: Number(row.debit),
-      credit: Number(row.credit),
-      debitBalance: Number(Math.max(Number(row.debit) - Number(row.credit), 0).toFixed(2)),
-      creditBalance: Number(Math.max(Number(row.credit) - Number(row.debit), 0).toFixed(2)),
-    })).filter((row) => row.debit !== 0 || row.credit !== 0);
+    const calculated = calculateTrialBalance(result.rows);
+    const { accounts } = calculated;
     return NextResponse.json({
       report, from, to, accounts,
-      totals: {
-        debit: Number(accounts.reduce((sum, row) => sum + row.debit, 0).toFixed(2)),
-        credit: Number(accounts.reduce((sum, row) => sum + row.credit, 0).toFixed(2)),
-        debitBalance: Number(accounts.reduce((sum, row) => sum + row.debitBalance, 0).toFixed(2)),
-        creditBalance: Number(accounts.reduce((sum, row) => sum + row.creditBalance, 0).toFixed(2)),
-      },
+      totals: calculated.totals,
     });
   } catch (error) {
     console.error("Falha ao gerar relatório contabilístico:", error);
