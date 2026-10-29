@@ -248,10 +248,44 @@ try {
     "INSERT INTO organisation_memberships (organisation_id,user_id,role) VALUES ($1,$2,'tax_officer')",
     [adminOrganisation,taxReviewerId],
   );
+  await fixtureClient.query(
+    "INSERT INTO platform_administrators (user_id,granted_by_user_id,note) VALUES ($1,$2,$3)",
+    [taxReviewerId,payload.user.id,"Acesso temporário de revisão fiscal no teste HTTP."],
+  );
   taxFixtureIds = { organisation: adminOrganisation, reviewerId: taxReviewerId };
+
+  const tenantAdminEmail = "http-tenant-admin-" + Date.now() + "@example.test";
+  const tenantAdminPassword = "CI-tenant-admin-password-long-123";
+  const tenantAdminHash = await hash(tenantAdminPassword, 10);
+  const tenantAdminId = (await fixtureClient.query(
+    "INSERT INTO app_users (email,full_name,password_hash,status) VALUES ($1,'HTTP Tenant Superadmin',$2,'active') RETURNING id",
+    [tenantAdminEmail,tenantAdminHash],
+  )).rows[0].id;
+  await fixtureClient.query(
+    "INSERT INTO organisation_memberships (organisation_id,user_id,role) VALUES ($1,$2,'superadmin')",
+    [fixtureIds.org,tenantAdminId],
+  );
+  taxFixtureIds.tenantAdminId = tenantAdminId;
+
+  const tenantAdminLogin = await fetch(baseUrl + "/api/auth/login",{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({email:tenantAdminEmail,password:tenantAdminPassword}),
+  });
+  assert.equal(tenantAdminLogin.status,200,"superadministrador de outra organização deve conseguir iniciar sessão");
+  const tenantAdminCookie = (tenantAdminLogin.headers.get("set-cookie")||"").split(";")[0];
 
   const anonymousTaxRules = await fetch(baseUrl + "/api/tax/rules");
   assert.equal(anonymousTaxRules.status,401,"registo de regras fiscais deve exigir sessão");
+  const tenantAdminCannotCreateGlobalRule = await fetch(baseUrl + "/api/tax/rules",{
+    method:"POST",headers:{cookie:tenantAdminCookie,"content-type":"application/json"},
+    body:JSON.stringify({
+      ruleKey:"ci.denied-rule-" + Date.now(),taxType:"OTHER",title:"Regra não autorizada",
+      calculationMethod:"manual",parameters:{},effectiveFrom:"2026-01-01",
+      legalReference:"Fixture de teste sem acesso global",sourceUrl:"https://example.test/denied",
+    }),
+  });
+  assert.equal(tenantAdminCannotCreateGlobalRule.status,403,"superadministrador de uma organização não pode alterar o registo fiscal global");
+
   const draftRuleResponse = await fetch(baseUrl + "/api/tax/rules",{
     method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
     body:JSON.stringify({
@@ -275,6 +309,12 @@ try {
     body:JSON.stringify({entityId:adminEntity,ruleKey:taxRuleKey,baseAmount:1000,asOfDate:"2026-10-29"}),
   });
   assert.equal(calcBeforeApproval.status,409,"regra não aprovada nunca pode ser usada por defeito");
+
+  const tenantAdminCannotSubmitGlobalRule = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
+    method:"PATCH",headers:{cookie:tenantAdminCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"submit_review"}),
+  });
+  assert.equal(tenantAdminCannotSubmitGlobalRule.status,403,"superadministrador de uma organização não pode gerir o workflow fiscal global");
 
   const submitRule = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
     method:"PATCH",headers:{cookie:sessionCookie,"content-type":"application/json"},
@@ -388,8 +428,14 @@ try {
         await fixtureClient.query("DELETE FROM tax_rule_versions WHERE id=$1", [taxFixtureIds.ruleId]).catch(() => undefined);
       }
       if (taxFixtureIds.reviewerId) {
+        await fixtureClient.query("DELETE FROM platform_administrators WHERE user_id=$1", [taxFixtureIds.reviewerId]).catch(() => undefined);
         await fixtureClient.query("DELETE FROM organisation_memberships WHERE organisation_id=$1 AND user_id=$2", [taxFixtureIds.organisation,taxFixtureIds.reviewerId]).catch(() => undefined);
         await fixtureClient.query("DELETE FROM app_users WHERE id=$1", [taxFixtureIds.reviewerId]).catch(() => undefined);
+      }
+      if (taxFixtureIds.tenantAdminId) {
+        await fixtureClient.query("DELETE FROM platform_administrators WHERE user_id=$1", [taxFixtureIds.tenantAdminId]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM organisation_memberships WHERE organisation_id=$1 AND user_id=$2", [fixtureIds.org,taxFixtureIds.tenantAdminId]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM app_users WHERE id=$1", [taxFixtureIds.tenantAdminId]).catch(() => undefined);
       }
     }
     if (fixtureIds) {
