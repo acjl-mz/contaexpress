@@ -47,7 +47,7 @@ export default function LoginPage() {
         {error && <p className="form-error" role="alert">{error}</p>}
         <button className="primary-button auth-submit" type="submit" disabled={busy}>{busy ? "A validar..." : "Iniciar sessão"} <ArrowRight size={17}/></button>
       </form>
-      <p className="auth-footnote">O acesso é restrito a utilizadores autorizados. Se ainda não tem credenciais, contacte o administrador do sistema.</p>
+      <p className="auth-footnote"><Link href="/esqueci-palavra-passe">Esqueceu-se da palavra-passe?</Link></p><p className="auth-footnote">O acesso é restrito a utilizadores autorizados. Se ainda não tem credenciais, contacte o administrador do sistema.</p>
     </section>
   </main>;
 }
