@@ -30,7 +30,7 @@ test("progressive brackets apply marginal rates and require an open final bracke
     { upTo: null, ratePercent: 30 },
   ] };
   assert.equal(validateRuleParameters("progressive_brackets", parameters), null);
-  assert.equal(calculateTaxAmount(activeRule("progressive_brackets", parameters), 650), 145);
+  assert.equal(calculateTaxAmount(activeRule("progressive_brackets", parameters), 650), 135);
   assert.match(validateRuleParameters("progressive_brackets", { brackets: [{ upTo: 100, ratePercent: 10 }] }), /último escalão/);
   assert.match(validateRuleParameters("progressive_brackets", { brackets: [
     { upTo: 500, ratePercent: 10 }, { upTo: 200, ratePercent: 15 }, { upTo: null, ratePercent: 20 },
@@ -48,7 +48,7 @@ test("only active rules within their effective period may be selected", () => {
   assert.equal(isRuleEffectiveOn(rule, "2026-12-31"), true);
   assert.equal(isRuleEffectiveOn(rule, "2027-01-01"), false);
   assert.equal(isRuleEffectiveOn({ ...rule, status: "approved" }, "2026-02-01"), false);
-  assert.equal(isRuleEffectiveOn(rule, "2026-02-31"), true, "date format validation is syntactic; API validates a real date before lookup");
+  assert.equal(isRuleEffectiveOn(rule, "2026-02-31"), false, "datas impossíveis não devem seleccionar uma regra");
 });
 
 test("the engine rejects unapproved rules and invalid monetary inputs", () => {
