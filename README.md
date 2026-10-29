@@ -20,7 +20,7 @@ Fundação, autenticação, gestão de empresas e primeiro MVP do núcleo contab
 - Regras fiscais versionadas e sujeitas a validação profissional.
 
 ## Arranque
-Consulte `docs/DEVELOPMENT.md` para preparar a base de dados, aplicar as quatro migrações e criar o primeiro administrador. Consulte `docs/ROADMAP.md` para o plano de implementação.
+Consulte `docs/DEVELOPMENT.md` para preparar o ambiente, aplicar as migrações 001–014 e criar o primeiro administrador. Consulte `docs/ROADMAP.md` para o plano de implementação.
 
 ## Aviso
 Esta fundação não constitui certificação fiscal nem autorização para emissão de facturas oficiais. Os requisitos aplicáveis em Moçambique deverão ser validados antes de disponibilizar essas funções.
