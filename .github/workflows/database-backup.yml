@@ -10,23 +10,38 @@ permissions:
 
 jobs:
   backup:
-    if: ${{ vars.BACKUP_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
+      BACKUP_ENABLED: ${{ vars.BACKUP_ENABLED || 'false' }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       BACKUP_GPG_RECIPIENT: ${{ secrets.BACKUP_GPG_RECIPIENT }}
       BACKUP_REMOTE: ${{ secrets.BACKUP_REMOTE }}
       BACKUP_RETENTION_DAYS: ${{ vars.BACKUP_RETENTION_DAYS || '30' }}
       BACKUP_DIR: ${{ runner.temp }}/contaexpress-backups
     steps:
+      - name: Check whether scheduled backups are enabled
+        id: preflight
+        run: |
+          if [[ "$BACKUP_ENABLED" != "true" ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Encrypted offsite backups are disabled; set repository variable BACKUP_ENABLED=true after configuring all secrets."
+            exit 0
+          fi
+          test -n "$DATABASE_URL"
+          test -n "$BACKUP_GPG_RECIPIENT"
+          test -n "$BACKUP_REMOTE"
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
       - name: Checkout
+        if: steps.preflight.outputs.enabled == 'true'
         uses: actions/checkout@v4
       - name: Install backup tools
+        if: steps.preflight.outputs.enabled == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client gnupg rclone
       - name: Configure encryption and remote storage
+        if: steps.preflight.outputs.enabled == 'true'
         env:
           BACKUP_GPG_PUBLIC_KEY: ${{ secrets.BACKUP_GPG_PUBLIC_KEY }}
           RCLONE_CONFIG_BASE64: ${{ secrets.RCLONE_CONFIG_BASE64 }}
@@ -44,6 +59,7 @@ jobs:
           chmod 600 "$HOME/.config/rclone/rclone.conf"
           gpg --list-keys "$BACKUP_GPG_RECIPIENT"
       - name: Create encrypted backup, upload and apply retention
+        if: steps.preflight.outputs.enabled == 'true'
         run: |
           set -euo pipefail
           bash scripts/db-backup.sh
