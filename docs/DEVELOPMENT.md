@@ -87,3 +87,11 @@ Estas instruções descrevem a configuração prevista; os comandos deverão ser
 - A acção **Preparar lançamento** cria um rascunho no diário geral, usando o período aberto que contém a data do movimento. Para entradas, debita a conta de tesouraria e credita a contrapartida; para saídas, faz o inverso.
 - O movimento guarda o identificador do lançamento e uma referência de origem única, para que repetição do pedido não crie um segundo lançamento. O rascunho não é confirmado automaticamente: um contabilista autorizado deve revê-lo e confirmá-lo no diário geral.
 - Se não houver mapeamento, diário geral ou período aberto, a API devolve um erro de validação em vez de criar um lançamento incompleto.
+
+
+## Reconciliação bancária assistida
+- Aceder a /tesouraria/reconciliacao ou usar o atalho na Tesouraria.
+- Importar CSV de uma conta bancária activa. Cabeçalhos aceites: data (date/data), descrição (description/descricao), valor (amount/valor); referência e direcção são opcionais. Datas aceites: AAAA-MM-DD ou DD/MM/AAAA; valores negativos são saídas e positivos entradas, excepto quando a direcção está explicitamente indicada.
+- Limites actuais: 5 MB por ficheiro e 1.000 linhas por importação. A importação guarda o ficheiro, as linhas e um evento de auditoria; não cria movimentos de tesouraria automaticamente.
+- O sistema sugere movimentos da mesma conta com o mesmo valor e sentido, até três dias de diferença e sem conflito de referência. A confirmação é manual, transaccional e impede que um movimento seja associado a duas linhas.
+- Linhas sem correspondência permanecem pendentes para investigação. Não se devem reconciliar divergências apenas para limpar a lista.
