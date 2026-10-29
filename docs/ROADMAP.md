@@ -51,7 +51,8 @@
 - [x] Modelo de fecho mensal com checklist padrão por período e bloqueios de encerramento.
 - [x] Interface de checklist com progresso, requisitos obrigatórios e confirmação explícita do encerramento.
 - [x] Bloqueio de encerramento com itens obrigatórios pendentes, lançamentos em rascunho ou totais desequilibrados.
-- [ ] Testes de integração para concorrência e permissões de fecho mensal.
+- [x] Teste de integração PostgreSQL para idempotência da criação de fechos mensais por empresa e período.
+- [ ] Testes de integração HTTP e concorrência real para permissões, fecho e encerramento simultâneo.
 
 ## Etapa 5 — Relatórios e robustez
 - [x] Primeira versão técnica do balanço e demonstração de resultados (requer validação contabilística com dados de teste antes de uso externo).
