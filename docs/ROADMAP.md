@@ -18,7 +18,7 @@
 - [x] Teste de integração PostgreSQL para isolamento multempresa e concessão/revogação de acesso explícito por entidade.
 - [x] Teste de integração PostgreSQL para impedir confirmação por auditores e validar numeração sequencial por diário.
 - [x] Testes HTTP de fumo para login, credenciais inválidas, sessão, acesso à listagem de empresas e logout.
-- [ ] Testes HTTP de permissões por função e isolamento multempresa.
+- [x] Testes HTTP de permissões por função e isolamento multempresa (auditor não confirma lançamentos; entidade de outra organização não pode ser consultada).
 - [x] Teste PostgreSQL concorrente para confirmar o mesmo lançamento em duas sessões e garantir uma única confirmação/numeração.
 - [ ] Testes concorrentes reais para estornos simultâneos e rate limiting.
 
