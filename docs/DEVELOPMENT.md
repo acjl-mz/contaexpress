@@ -82,7 +82,17 @@ Estas instruções descrevem a configuração prevista; os comandos deverão ser
 - `/tesouraria` permite registar contas de caixa/banco/carteira móvel, movimentos de entrada/saída e marcar movimentos como reconciliados. O movimento líquido é apenas um total dos movimentos registados; não equivale ao saldo real de caixa/banco nem inclui automaticamente o saldo inicial.
 - `/fiscalidade` mantém um calendário manual de obrigações fiscais e estados de preparação, submissão e pagamento. Os tipos disponíveis incluem IVA, IRPS, IRPC, ISPC, INSS e outros.
 - O calendário de obrigações continua manual. O registo fiscal versionado permite guardar fonte legal, vigência e aprovações; não são pré-carregadas taxas. A simulação só usa versões activas e validadas, não cria lançamentos ou declarações e requer revisão profissional antes do uso real.
-- As regras fiscais são referências globais partilhadas. O primeiro administrador criado pelo bootstrap recebe acesso de plataforma; um superadministrador de uma organização não obtém automaticamente esse privilégio. Em instalações existentes após a migração 014, um operador de base de dados deve conceder explicitamente acesso em `platform_administrators`, mediante procedimento interno aprovado, e registar o motivo. Conceda o mesmo acesso a um segundo revisor autorizado apenas quando necessário.
+- As regras fiscais são referências globais partilhadas. O primeiro administrador criado pelo bootstrap recebe acesso de plataforma; um superadministrador de uma organização não obtém automaticamente esse privilégio.
+- Em instalações existentes após a migração 014, um operador de base de dados deve conceder explicitamente acesso em `platform_administrators` a uma pessoa aprovada, usando uma ligação administrativa confiável e registando o motivo. Exemplo para nomear o responsável inicial (substitua o e-mail):
+  ```sql
+  INSERT INTO platform_administrators (user_id, granted_by_user_id, note)
+  SELECT u.id, u.id, 'Nomeação inicial aprovada pelo operador da instalação'
+  FROM app_users u
+  JOIN organisation_memberships om ON om.user_id = u.id AND om.role = 'superadmin'
+  WHERE lower(u.email) = lower('admin@example.com')
+  ON CONFLICT (user_id) DO NOTHING;
+  ```
+  Para nomear um segundo revisor, use o mesmo mecanismo, definindo `granted_by_user_id` como o ID de um administrador de plataforma já autorizado. Não conceda acesso global automaticamente a todos os superadministradores de empresas.
 
 
 ## Integração de Tesouraria com Contabilidade
