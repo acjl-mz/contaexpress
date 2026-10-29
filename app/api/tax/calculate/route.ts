@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const entityId = typeof body?.entityId === "string" ? body.entityId.trim() : "";
   const ruleKey = typeof body?.ruleKey === "string" ? body.ruleKey.trim().toLowerCase() : "";
-  const baseAmount = typeof body?.baseAmount === "number" ? body.baseAmount : Number(body?.baseAmount);
+  const baseAmount = typeof body?.baseAmount === "number" ? body.baseAmount : Number.NaN;
   const asOfDate = body?.asOfDate;
 
   if (!entityId || !/^[a-z][a-z0-9._-]{2,79}$/.test(ruleKey) || !Number.isFinite(baseAmount) || baseAmount < 0 || baseAmount > 1_000_000_000_000 || !isRealDate(asOfDate)) {
