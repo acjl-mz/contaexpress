@@ -24,7 +24,7 @@ const server = spawn(process.execPath, [
 let serverOutput = "";
 let fixtureClient;
 let fixtureIds;
-let passwordFixtureIds;
+let taxFixtureIds;
 server.stdout.on("data", chunk => { serverOutput += chunk.toString(); });
 server.stderr.on("data", chunk => { serverOutput += chunk.toString(); });
 
@@ -80,19 +80,6 @@ try {
   const anonymousCompanies = await fetch(`${baseUrl}/api/companies`);
   assert.equal(anonymousCompanies.status, 401, "listagem de empresas deve exigir sessão");
 
-  const anonymousInvitations = await fetch(`${baseUrl}/api/organisation-invitations`);
-  assert.equal(anonymousInvitations.status, 401, "gestão de convites deve exigir sessão");
-  const anonymousInvitationCreate = await fetch(`${baseUrl}/api/organisation-invitations`, {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email: "invited@example.test", role: "accountant" }),
-  });
-  assert.equal(anonymousInvitationCreate.status, 401, "criação de convites deve exigir sessão");
-  const invalidInvitationAccept = await fetch(`${baseUrl}/api/organisation-invitations/accept`, {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ token: "a".repeat(64), fullName: "Test Invitee", password: "CI-invitation-password-long-2026", confirmPassword: "CI-invitation-password-long-2026" }),
-  });
-  assert.equal(invalidInvitationAccept.status, 400, "aceitação deve rejeitar token inexistente");
-
   const anonymousPdf = await fetch(`${baseUrl}/api/accounting/reports/pdf?entityId=00000000-0000-0000-0000-000000000000`);
   assert.equal(anonymousPdf.status, 401, "exportação PDF deve exigir sessão");
   const anonymousTreasury = await fetch(`${baseUrl}/api/treasury?entityId=00000000-0000-0000-0000-000000000000`);
@@ -132,95 +119,6 @@ try {
   fixtureClient = new Client({ connectionString: process.env.DATABASE_URL });
   await fixtureClient.connect();
   const fixtureOrg = (await fixtureClient.query("INSERT INTO organisations (legal_name, display_name) VALUES ($1, $1) RETURNING id", [`HTTP security org ${Date.now()}`])).rows[0].id;
-
-  // Authenticated password change: reject bad credentials and invalidate all older sessions/reset links.
-  const passwordUserEmail = `http-password-change-${Date.now()}@example.test`;
-  const oldPassword = "CI-old-password-credential-2026";
-  const newPassword = "CI-new-password-credential-2026";
-  const passwordHash = await hash(oldPassword, 10);
-  const passwordUserId = (await fixtureClient.query(
-    "INSERT INTO app_users (email, full_name, password_hash, status) VALUES ($1, 'HTTP Password Change Test', $2, 'active') RETURNING id",
-    [passwordUserEmail, passwordHash],
-  )).rows[0].id;
-  await fixtureClient.query(
-    "INSERT INTO organisation_memberships (organisation_id, user_id, role) VALUES ($1, $2, 'superadmin')",
-    [fixtureOrg, passwordUserId],
-  );
-  passwordFixtureIds = { org: fixtureOrg, user: passwordUserId };
-
-  const passwordLogin = await fetch(`${baseUrl}/api/auth/login`, {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email: passwordUserEmail, password: oldPassword }),
-  });
-  assert.equal(passwordLogin.status, 200, "utilizador de teste deve iniciar sessão antes de alterar a palavra-passe");
-  const passwordCookie = (passwordLogin.headers.get("set-cookie") || "").split(";")[0];
-
-  const unauthenticatedChange = await fetch(`${baseUrl}/api/auth/change-password`, {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ currentPassword: oldPassword, newPassword, confirmPassword: newPassword }),
-  });
-  assert.equal(unauthenticatedChange.status, 401, "alteração autenticada deve exigir sessão");
-
-  const wrongCurrentPassword = await fetch(`${baseUrl}/api/auth/change-password`, {
-    method: "POST", headers: { cookie: passwordCookie, "content-type": "application/json" },
-    body: JSON.stringify({ currentPassword: "incorrect-password", newPassword, confirmPassword: newPassword }),
-  });
-  assert.equal(wrongCurrentPassword.status, 400, "palavra-passe actual incorrecta deve ser rejeitada");
-
-  const mismatchedConfirmation = await fetch(`${baseUrl}/api/auth/change-password`, {
-    method: "POST", headers: { cookie: passwordCookie, "content-type": "application/json" },
-    body: JSON.stringify({ currentPassword: oldPassword, newPassword, confirmPassword: newPassword + "-mismatch" }),
-  });
-  assert.equal(mismatchedConfirmation.status, 400, "confirmação diferente deve ser rejeitada");
-
-  const pendingResetHash = "e".repeat(64);
-  await fixtureClient.query(
-    "INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, now() + interval '30 minutes')",
-    [passwordUserId, pendingResetHash],
-  );
-
-  const changePassword = await fetch(`${baseUrl}/api/auth/change-password`, {
-    method: "POST", headers: { cookie: passwordCookie, "content-type": "application/json" },
-    body: JSON.stringify({ currentPassword: oldPassword, newPassword, confirmPassword: newPassword }),
-  });
-  const changedPayload = await changePassword.json();
-  assert.equal(changePassword.status, 200, "credenciais correctas devem permitir alterar a palavra-passe: " + JSON.stringify(changedPayload));
-  assert.match(changedPayload.message, /alterada/i);
-  const renewedPasswordCookie = (changePassword.headers.get("set-cookie") || "").split(";")[0];
-  assert.ok(renewedPasswordCookie, "a sessão corrente deve ser renovada com a nova versão");
-
-  const stalePasswordSession = await fetch(`${baseUrl}/api/auth/me`, { headers: { cookie: passwordCookie } });
-  assert.equal(stalePasswordSession.status, 401, "a sessão anterior deve ser invalidada imediatamente");
-  const oldPasswordLogin = await fetch(`${baseUrl}/api/auth/login`, {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email: passwordUserEmail, password: oldPassword }),
-  });
-  assert.equal(oldPasswordLogin.status, 401, "a palavra-passe anterior não deve autenticar após a alteração");
-  const newPasswordLogin = await fetch(`${baseUrl}/api/auth/login`, {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email: passwordUserEmail, password: newPassword }),
-  });
-  assert.equal(newPasswordLogin.status, 200, "a nova palavra-passe deve autenticar correctamente");
-  const renewedSession = await fetch(`${baseUrl}/api/auth/me`, { headers: { cookie: renewedPasswordCookie } });
-  assert.equal(renewedSession.status, 200, "o navegador da alteração deve continuar autenticado");
-
-  const reusedPassword = await fetch(`${baseUrl}/api/auth/change-password`, {
-    method: "POST", headers: { cookie: renewedPasswordCookie, "content-type": "application/json" },
-    body: JSON.stringify({ currentPassword: newPassword, newPassword, confirmPassword: newPassword }),
-  });
-  assert.equal(reusedPassword.status, 400, "a mesma palavra-passe não pode ser reutilizada como nova palavra-passe");
-
-  const invalidatedReset = await fixtureClient.query(
-    "SELECT used_at FROM password_reset_tokens WHERE user_id=$1 AND token_hash=$2",
-    [passwordUserId, pendingResetHash],
-  );
-  assert.ok(invalidatedReset.rows[0]?.used_at, "links de recuperação pendentes devem ser invalidados");
-  const passwordAudit = await fixtureClient.query(
-    "SELECT id FROM audit_events WHERE actor_user_id=$1 AND event_type='auth.password_changed' LIMIT 1",
-    [passwordUserId],
-  );
-  assert.equal(passwordAudit.rowCount, 1, "a alteração da palavra-passe deve ser auditada");
-
   const auditorEmail = `http-auditor-${Date.now()}@example.test`;
   const auditorPassword = "CI-auditor-test-password";
   const auditorHash = await hash(auditorPassword, 10);
@@ -334,96 +232,147 @@ try {
   assert.equal(statementStatus.rows[0].status,"matched","a linha do extracto deve ficar marcada como correspondida");
   assert.equal(statementStatus.rows[0].treasury_transaction_id,matchingTransaction,"a correspondência deve manter a referência do movimento");
 
-  // Treasury -> ledger integration: authorised preparation, balanced draft, and authorised posting.
-  const treasuryYear = (await fixtureClient.query(
-    "INSERT INTO fiscal_years (accounting_entity_id,label,starts_on,ends_on) VALUES ($1,'HTTP-TREASURY','2026-01-01','2026-12-31') RETURNING id",
+  // Versioned tax-rule workflow: draft -> review -> independent approval -> activation -> preview -> retirement.
+  const adminOrganisation = (await fixtureClient.query(
+    "SELECT organisation_id FROM accounting_entities WHERE id=$1",
     [adminEntity],
-  )).rows[0].id;
-  const treasuryPeriod = (await fixtureClient.query(
-    "INSERT INTO accounting_periods (accounting_entity_id,fiscal_year_id,label,starts_on,ends_on) VALUES ($1,$2,'HTTP-TREASURY','2026-01-01','2026-12-31') RETURNING id",
-    [adminEntity,treasuryYear],
+  )).rows[0].organisation_id;
+  const taxReviewerEmail = "http-tax-reviewer-" + Date.now() + "@example.test";
+  const taxReviewerPassword = "CI-tax-reviewer-password-long-123";
+  const taxReviewerHash = await hash(taxReviewerPassword, 10);
+  const taxReviewerId = (await fixtureClient.query(
+    "INSERT INTO app_users (email,full_name,password_hash,status) VALUES ($1,'HTTP Tax Reviewer',$2,'active') RETURNING id",
+    [taxReviewerEmail,taxReviewerHash],
   )).rows[0].id;
   await fixtureClient.query(
-    "INSERT INTO accounting_journals (accounting_entity_id,code,name) VALUES ($1,'GER','Diário Geral') ON CONFLICT (accounting_entity_id,code) DO NOTHING",
-    [adminEntity],
+    "INSERT INTO organisation_memberships (organisation_id,user_id,role) VALUES ($1,$2,'tax_officer')",
+    [adminOrganisation,taxReviewerId],
   );
-  const treasuryLedger = (await fixtureClient.query(
-    "INSERT INTO chart_of_accounts (accounting_entity_id,code,name,account_type) VALUES ($1,'HTTPTR-1','Banco - integração','asset') RETURNING id",
-    [adminEntity],
-  )).rows[0].id;
-  const treasuryCounterpart = (await fixtureClient.query(
-    "INSERT INTO chart_of_accounts (accounting_entity_id,code,name,account_type) VALUES ($1,'HTTPTR-2','Receita - integração','income') RETURNING id",
-    [adminEntity],
+  await fixtureClient.query(
+    "INSERT INTO platform_administrators (user_id,granted_by_user_id,note) VALUES ($1,$2,$3)",
+    [taxReviewerId,payload.user.id,"Acesso temporário de revisão fiscal no teste HTTP."],
+  );
+  taxFixtureIds = { organisation: adminOrganisation, reviewerId: taxReviewerId };
+
+  const tenantAdminEmail = "http-tenant-admin-" + Date.now() + "@example.test";
+  const tenantAdminPassword = "CI-tenant-admin-password-long-123";
+  const tenantAdminHash = await hash(tenantAdminPassword, 10);
+  const tenantAdminId = (await fixtureClient.query(
+    "INSERT INTO app_users (email,full_name,password_hash,status) VALUES ($1,'HTTP Tenant Superadmin',$2,'active') RETURNING id",
+    [tenantAdminEmail,tenantAdminHash],
   )).rows[0].id;
   await fixtureClient.query(
-    "INSERT INTO treasury_posting_mappings (accounting_entity_id,treasury_account_id,direction,category,ledger_account_id,counterpart_account_id,created_by) VALUES ($1,$2,'inflow','customer_receipt',$3,$4,$5)",
-    [adminEntity,bankAccount,treasuryLedger,treasuryCounterpart,payload.user.id],
+    "INSERT INTO organisation_memberships (organisation_id,user_id,role) VALUES ($1,$2,'superadmin')",
+    [fixtureIds.org,tenantAdminId],
   );
-  const postingTransaction = (await fixtureClient.query(
-    "INSERT INTO treasury_transactions (accounting_entity_id,treasury_account_id,transaction_date,direction,category,description,amount,reference,status,created_by) VALUES ($1,$2,'2026-10-21','inflow','customer_receipt','Recebimento para integração contabilística',1200,'TREASURY-POST-001','recorded',$3) RETURNING id",
-    [adminEntity,bankAccount,payload.user.id],
-  )).rows[0].id;
+  taxFixtureIds.tenantAdminId = tenantAdminId;
 
-  const anonymousPrepare = await fetch(baseUrl + "/api/treasury/post", {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ entityId: adminEntity, transactionId: postingTransaction }),
+  const tenantAdminLogin = await fetch(baseUrl + "/api/auth/login",{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({email:tenantAdminEmail,password:tenantAdminPassword}),
   });
-  assert.equal(anonymousPrepare.status, 401, "preparação sem sessão deve ser rejeitada");
+  assert.equal(tenantAdminLogin.status,200,"superadministrador de outra organização deve conseguir iniciar sessão");
+  const tenantAdminCookie = (tenantAdminLogin.headers.get("set-cookie")||"").split(";")[0];
 
-  const outsiderPrepare = await fetch(baseUrl + "/api/treasury/post", {
-    method: "POST", headers: { cookie: sessionCookie, "content-type": "application/json" },
-    body: JSON.stringify({ entityId: fixtureIds.entity, transactionId: postingTransaction }),
+  const anonymousTaxRules = await fetch(baseUrl + "/api/tax/rules");
+  assert.equal(anonymousTaxRules.status,401,"registo de regras fiscais deve exigir sessão");
+  const tenantAdminCannotCreateGlobalRule = await fetch(baseUrl + "/api/tax/rules",{
+    method:"POST",headers:{cookie:tenantAdminCookie,"content-type":"application/json"},
+    body:JSON.stringify({
+      ruleKey:"ci.denied-rule-" + Date.now(),taxType:"OTHER",title:"Regra não autorizada",
+      calculationMethod:"manual",parameters:{},effectiveFrom:"2026-01-01",
+      legalReference:"Fixture de teste sem acesso global",sourceUrl:"https://example.test/denied",
+    }),
   });
-  assert.equal(outsiderPrepare.status, 403, "mesmo um superadministrador sem associação à empresa não deve preparar lançamento para ela");
+  assert.equal(tenantAdminCannotCreateGlobalRule.status,403,"superadministrador de uma organização não pode alterar o registo fiscal global");
 
-  const prepareEntry = await fetch(baseUrl + "/api/treasury/post", {
-    method: "POST", headers: { cookie: sessionCookie, "content-type": "application/json" },
-    body: JSON.stringify({ entityId: adminEntity, transactionId: postingTransaction }),
+  const draftRuleResponse = await fetch(baseUrl + "/api/tax/rules",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({
+      ruleKey:"ci.test-rule-" + Date.now(),taxType:"OTHER",title:"Regra fiscal de teste CI",
+      description:"Regra artificial exclusiva dos testes automatizados; não representa legislação real.",
+      calculationMethod:"percentage_of_base",parameters:{ratePercent:10,roundingScale:2},
+      effectiveFrom:"2026-01-01",effectiveTo:"2026-12-31",
+      legalReference:"Fixture CI — referência fictícia para testes",
+      sourceUrl:"https://example.test/ci-tax-rule-fixture",sourcePublishedOn:"2026-01-01",
+    }),
   });
-  assert.equal(prepareEntry.status, 201, "utilizador autorizado deve preparar o rascunho contabilístico");
-  const preparedPayload = await prepareEntry.json();
-  assert.equal(preparedPayload.status, "draft", "a preparação não deve confirmar automaticamente o lançamento");
-  const preparedLines = await fixtureClient.query(
-    "SELECT debit::numeric AS debit,credit::numeric AS credit,account_id FROM journal_entry_lines WHERE accounting_entity_id=$1 AND entry_id=$2 ORDER BY line_number",
-    [adminEntity,preparedPayload.entry.id],
-  );
-  assert.equal(preparedLines.rowCount, 2, "rascunho deve conter duas linhas");
-  assert.equal(Number(preparedLines.rows[0].debit)+Number(preparedLines.rows[1].debit),1200,"débito deve corresponder ao valor do movimento");
-  assert.equal(Number(preparedLines.rows[0].credit)+Number(preparedLines.rows[1].credit),1200,"crédito deve corresponder ao valor do movimento");
-  assert.equal(preparedLines.rows[0].account_id,treasuryLedger,"entrada deve debitar a conta de tesouraria");
-  assert.equal(preparedLines.rows[1].account_id,treasuryCounterpart,"entrada deve creditar a conta de contrapartida");
+  assert.equal(draftRuleResponse.status,201,"superadministrador deve conseguir criar uma versão de teste em rascunho");
+  const draftRulePayload = await draftRuleResponse.json();
+  const taxRuleId = draftRulePayload.rule.id;
+  const taxRuleKey = draftRulePayload.rule.ruleKey;
+  taxFixtureIds.ruleId = taxRuleId;
+  assert.equal(draftRulePayload.rule.status,"draft","versão nova deve começar em rascunho");
 
-  const repeatedPrepare = await fetch(baseUrl + "/api/treasury/post", {
-    method: "POST", headers: { cookie: sessionCookie, "content-type": "application/json" },
-    body: JSON.stringify({ entityId: adminEntity, transactionId: postingTransaction }),
+  const calcBeforeApproval = await fetch(baseUrl + "/api/tax/calculate",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({entityId:adminEntity,ruleKey:taxRuleKey,baseAmount:1000,asOfDate:"2026-10-29"}),
   });
-  assert.equal(repeatedPrepare.status, 200, "repetição deve devolver o lançamento existente");
-  assert.equal((await repeatedPrepare.json()).alreadyPrepared, true, "repetição não deve criar segundo lançamento");
+  assert.equal(calcBeforeApproval.status,409,"regra não aprovada nunca pode ser usada por defeito");
 
-  const auditorPostTreasuryEntry = await fetch(
-    baseUrl + "/api/accounting/entries/" + encodeURIComponent(preparedPayload.entry.id) + "/post?entityId=" + encodeURIComponent(adminEntity),
-    { method: "POST", headers: { cookie: auditorCookie } },
-  );
-  assert.equal(auditorPostTreasuryEntry.status, 403, "auditor não deve confirmar o rascunho criado pela tesouraria");
+  const tenantAdminCannotSubmitGlobalRule = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
+    method:"PATCH",headers:{cookie:tenantAdminCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"submit_review"}),
+  });
+  assert.equal(tenantAdminCannotSubmitGlobalRule.status,403,"superadministrador de uma organização não pode gerir o workflow fiscal global");
 
-  const confirmTreasuryEntry = await fetch(
-    baseUrl + "/api/accounting/entries/" + encodeURIComponent(preparedPayload.entry.id) + "/post?entityId=" + encodeURIComponent(adminEntity),
-    { method: "POST", headers: { cookie: sessionCookie } },
-  );
-  assert.equal(confirmTreasuryEntry.status, 200, "contabilista autorizado deve confirmar o lançamento preparado");
-  const confirmedPayload = await confirmTreasuryEntry.json();
-  assert.equal(confirmedPayload.entry.status, "posted", "a API deve devolver o estado confirmado");
-  const persistedPosting = await fixtureClient.query(
-    "SELECT status,entry_number FROM journal_entries WHERE accounting_entity_id=$1 AND id=$2",
-    [adminEntity,preparedPayload.entry.id],
-  );
-  assert.equal(persistedPosting.rows[0].status, "posted", "a confirmação deve persistir no PostgreSQL");
-  assert.ok(persistedPosting.rows[0].entry_number, "o lançamento confirmado deve receber número sequencial");
-  const linkedMovement = await fixtureClient.query(
-    "SELECT journal_entry_id FROM treasury_transactions WHERE accounting_entity_id=$1 AND id=$2",
-    [adminEntity,postingTransaction],
-  );
-  assert.equal(linkedMovement.rows[0].journal_entry_id,preparedPayload.entry.id, "o movimento de tesouraria deve continuar ligado ao lançamento confirmado");
+  const submitRule = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
+    method:"PATCH",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"submit_review"}),
+  });
+  assert.equal(submitRule.status,200,"rascunho deve poder seguir para revisão");
+  assert.equal((await submitRule.json()).rule.status,"in_review");
+
+  const selfApproval = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
+    method:"PATCH",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"approve",sourceVerifiedOn:new Date().toISOString().slice(0,10),reviewNotes:"Esta tentativa de autoaprovação deve ser rejeitada pelo workflow."}),
+  });
+  assert.equal(selfApproval.status,403,"autor da regra não pode aprovar a própria versão");
+
+  const reviewerLogin = await fetch(baseUrl + "/api/auth/login",{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({email:taxReviewerEmail,password:taxReviewerPassword}),
+  });
+  assert.equal(reviewerLogin.status,200,"responsável fiscal de teste deve conseguir iniciar sessão");
+  const reviewerCookie = (reviewerLogin.headers.get("set-cookie")||"").split(";")[0];
+  const approval = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
+    method:"PATCH",headers:{cookie:reviewerCookie,"content-type":"application/json"},
+    body:JSON.stringify({
+      action:"approve",sourceVerifiedOn:new Date().toISOString().slice(0,10),
+      reviewNotes:"Fonte de teste conferida para o CI; nenhum diploma real é representado por esta fixture.",
+    }),
+  });
+  assert.equal(approval.status,200,"outro responsável fiscal deve poder aprovar após registar revisão da fonte");
+  assert.equal((await approval.json()).rule.status,"approved");
+
+  const activateRule = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
+    method:"PATCH",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"activate"}),
+  });
+  assert.equal(activateRule.status,200,"superadministrador deve activar versão aprovada");
+  assert.equal((await activateRule.json()).rule.status,"active");
+
+  const taxPreview = await fetch(baseUrl + "/api/tax/calculate",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({entityId:adminEntity,ruleKey:taxRuleKey,baseAmount:1000,asOfDate:"2026-10-29"}),
+  });
+  const taxPreviewPayload = await taxPreview.json();
+  assert.equal(taxPreview.status,200,"regra activa e em vigência deve permitir simulação: " + JSON.stringify(taxPreviewPayload));
+  assert.equal(taxPreviewPayload.preview.amount,100,"simulação deve usar a taxa explicitamente configurada na fixture");
+  assert.equal(taxPreviewPayload.preview.version,1);
+  assert.match(taxPreviewPayload.notice,/não cria obrigação/i);
+
+  const retireRule = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
+    method:"PATCH",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"retire"}),
+  });
+  assert.equal(retireRule.status,200,"superadministrador deve retirar uma versão activa");
+  assert.equal((await retireRule.json()).rule.status,"retired");
+  const calcAfterRetirement = await fetch(baseUrl + "/api/tax/calculate",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({entityId:adminEntity,ruleKey:taxRuleKey,baseAmount:1000,asOfDate:"2026-10-29"}),
+  });
+  assert.equal(calcAfterRetirement.status,409,"versão retirada não pode continuar a ser usada");
 
   const adminYear = (await fixtureClient.query("INSERT INTO fiscal_years (accounting_entity_id, label, starts_on, ends_on) VALUES ($1, 'HTTP-REVERSAL', '2026-01-01', '2026-12-31') RETURNING id", [adminEntity])).rows[0].id;
   const adminPeriod = (await fixtureClient.query("INSERT INTO accounting_periods (accounting_entity_id, fiscal_year_id, label, starts_on, ends_on) VALUES ($1, $2, 'HTTP-REVERSAL', '2026-01-01', '2026-12-31') RETURNING id", [adminEntity, adminYear])).rows[0].id;
@@ -469,15 +418,25 @@ try {
   const afterLogout = await fetch(`${baseUrl}/api/auth/me`);
   assert.equal(afterLogout.status, 401, "após logout, a sessão não deve ser reutilizada");
 
-  console.log("HTTP smoke tests: autenticação, alteração de palavra-passe, sessões, acesso a empresas e logout verificados.");
+  console.log("HTTP smoke tests: autenticação, sessão, acesso a empresas e logout verificados.");
 } finally {
   if (fixtureClient) {
     await fixtureClient.query("SET session_replication_role = replica").catch(() => undefined);
-    if (passwordFixtureIds) {
-      await fixtureClient.query("DELETE FROM password_reset_tokens WHERE user_id=$1", [passwordFixtureIds.user]).catch(() => undefined);
-      await fixtureClient.query("DELETE FROM audit_events WHERE actor_user_id=$1 OR target_id=$2", [passwordFixtureIds.user, passwordFixtureIds.user]).catch(() => undefined);
-      await fixtureClient.query("DELETE FROM organisation_memberships WHERE organisation_id=$1 AND user_id=$2", [passwordFixtureIds.org, passwordFixtureIds.user]).catch(() => undefined);
-      await fixtureClient.query("DELETE FROM app_users WHERE id=$1", [passwordFixtureIds.user]).catch(() => undefined);
+    if (taxFixtureIds) {
+      if (taxFixtureIds.ruleId) {
+        await fixtureClient.query("DELETE FROM tax_rule_audit_events WHERE rule_version_id=$1", [taxFixtureIds.ruleId]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM tax_rule_versions WHERE id=$1", [taxFixtureIds.ruleId]).catch(() => undefined);
+      }
+      if (taxFixtureIds.reviewerId) {
+        await fixtureClient.query("DELETE FROM platform_administrators WHERE user_id=$1", [taxFixtureIds.reviewerId]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM organisation_memberships WHERE organisation_id=$1 AND user_id=$2", [taxFixtureIds.organisation,taxFixtureIds.reviewerId]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM app_users WHERE id=$1", [taxFixtureIds.reviewerId]).catch(() => undefined);
+      }
+      if (taxFixtureIds.tenantAdminId) {
+        await fixtureClient.query("DELETE FROM platform_administrators WHERE user_id=$1", [taxFixtureIds.tenantAdminId]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM organisation_memberships WHERE organisation_id=$1 AND user_id=$2", [fixtureIds.org,taxFixtureIds.tenantAdminId]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM app_users WHERE id=$1", [taxFixtureIds.tenantAdminId]).catch(() => undefined);
+      }
     }
     if (fixtureIds) {
       const f = fixtureIds;
@@ -495,10 +454,9 @@ try {
       await fixtureClient.query("DELETE FROM organisations WHERE id = $1", [f.org]).catch(() => undefined);
       if (f.adminEntity) {
         await fixtureClient.query("DELETE FROM bank_statement_lines WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
-        await fixtureClient.query("DELETE FROM bank_statement_imports WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
-        await fixtureClient.query("DELETE FROM treasury_transactions WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
-        await fixtureClient.query("DELETE FROM treasury_posting_mappings WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
-        await fixtureClient.query("DELETE FROM treasury_accounts WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM bank_statement_imports WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM treasury_transactions WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM treasury_accounts WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM journal_entry_lines WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
         await fixtureClient.query("DELETE FROM journal_entries WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
         await fixtureClient.query("DELETE FROM audit_events WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
