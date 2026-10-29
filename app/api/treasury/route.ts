@@ -55,6 +55,8 @@ export async function POST(request: NextRequest) {
       const accountType = clean(body.accountType, 30);
       const currency = clean(body.currency, 3).toUpperCase() || "MZN";
       const openingBalance = Number(body.openingBalance ?? 0);
+      const entityCurrency = await db.query("SELECT functional_currency FROM accounting_entities WHERE id=$1", [entityId]);
+      if (!entityCurrency.rowCount || currency !== entityCurrency.rows[0].functional_currency) return NextResponse.json({ error: "A moeda da conta deve corresponder à moeda funcional da empresa." }, { status: 400 });
       if (name.length < 2 || !TYPES.has(accountType) || !/^[A-Z]{3}$/.test(currency) || !Number.isFinite(openingBalance) || Math.abs(openingBalance) > 1_000_000_000_000) {
         return NextResponse.json({ error: "Verifique o nome, tipo, moeda e saldo inicial." }, { status: 400 });
       }
