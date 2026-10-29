@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await db.query(
-      `SELECT u.id, u.email, u.full_name, u.password_hash, om.organisation_id, om.role
+      `SELECT u.id, u.email, u.full_name, u.password_hash, u.session_version, om.organisation_id, om.role
        FROM app_users u
        JOIN organisation_memberships om ON om.user_id = u.id
        JOIN organisations o ON o.id = om.organisation_id AND o.status = 'active'
@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       fullName: user.full_name,
       organisationId: user.organisation_id,
       role: user.role,
+      sessionVersion: user.session_version,
     });
     return NextResponse.json({ user: { id: user.id, email: user.email, fullName: user.full_name, role: user.role } });
   } catch (error) {
