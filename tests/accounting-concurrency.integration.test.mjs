@@ -58,6 +58,7 @@ test("concurrent posting of one draft assigns one number and posts exactly once"
     assert.equal(numbered.rows[0].count, 1);
   } finally {
     if (ids) {
+      await setup.query("SET session_replication_role = replica").catch(() => undefined);
       await setup.query("DELETE FROM journal_entry_lines WHERE entry_id = $1", [ids.entry]).catch(() => undefined);
       await setup.query("DELETE FROM journal_entries WHERE id = $1", [ids.entry]).catch(() => undefined);
       await setup.query("DELETE FROM chart_of_accounts WHERE accounting_entity_id = $1", [ids.entity]).catch(() => undefined);
@@ -68,6 +69,7 @@ test("concurrent posting of one draft assigns one number and posts exactly once"
       await setup.query("DELETE FROM organisation_memberships WHERE organisation_id = $1 AND user_id = $2", [ids.org, ids.user]).catch(() => undefined);
       await setup.query("DELETE FROM app_users WHERE id = $1", [ids.user]).catch(() => undefined);
       await setup.query("DELETE FROM organisations WHERE id = $1", [ids.org]).catch(() => undefined);
+      await setup.query("SET session_replication_role = origin").catch(() => undefined);
     }
     await Promise.all([setup.end(), first.end(), second.end()]);
   }
