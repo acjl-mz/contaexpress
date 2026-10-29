@@ -10,7 +10,7 @@
 2. Gerar uma chave de sessão com pelo menos 32 caracteres aleatórios e defini-la em `SESSION_SECRET`.
 3. Instalar dependências com `npm install`.
 4. Iniciar PostgreSQL com `docker compose up -d db`.
-5. Aplicar as migrações, pela ordem: `001_core_schema.sql`, `002_auth.sql`, `003_posting_controls.sql`, `004_entity_access.sql`, `005_reversal_controls.sql`, `006_login_rate_limit.sql` `007_accounting_documents.sql` `008_accounting_tasks.sql` e `009_monthly_close.sql`.
+5. Aplicar as migrações, pela ordem: `001_core_schema.sql`, `002_auth.sql`, `003_posting_controls.sql`, `004_entity_access.sql`, `005_reversal_controls.sql`, `006_login_rate_limit.sql` `007_accounting_documents.sql` `008_accounting_tasks.sql` e `009_monthly_close.sql` e `010_password_reset.sql`.
 6. Criar o administrador inicial definindo `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD` e, opcionalmente, `ADMIN_ORGANISATION` no ambiente. A palavra-passe deve ter pelo menos 14 caracteres. Executar `npm run bootstrap:admin` uma única vez.
 7. Iniciar a aplicação com `npm run dev`.
 8. Abrir `http://localhost:3000/login` e entrar com as credenciais criadas.
@@ -27,6 +27,7 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/006_login_rate_li
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/007_accounting_documents.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/008_accounting_tasks.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/009_monthly_close.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/010_password_reset.sql
 ```
 A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e configurar a variável `DATABASE_URL`.
 
@@ -42,6 +43,10 @@ A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e conf
 - `npm run backup:db` — cria backup PostgreSQL em formato customizado, checksum SHA-256 e metadados; requer `pg_dump`, `pg_restore` e `DATABASE_URL`.
 - `RESTORE_DATABASE_URL=... RESTORE_CONFIRM=YES_RESTORE_DATABASE npm run restore:db -- ./backups/ficheiro.dump` — restaura para a base explicitamente indicada, verifica checksum e exige confirmação explícita. Nunca aponte para a base de produção sem plano de recuperação aprovado.
 - `RESTORE_DATABASE_URL=... npm run verify:db-restore` — verifica a presença das tabelas essenciais e estrutura mínima depois da restauração. O CI executa um ensaio de backup/restauro numa base de dados descartável.
+
+## Recuperação de palavra-passe
+- Configurar `APP_BASE_URL`, `RESEND_API_KEY` e `RESEND_FROM_EMAIL` para activar o envio de links de recuperação através da API Resend. O endpoint responde sempre com uma mensagem genérica para não revelar se o e-mail existe.
+- Os links expiram em 30 minutos, são de uso único e o token é armazenado apenas como hash. A redefinição incrementa `session_version`, invalidando sessões anteriores. Aplicar a migração `010_password_reset.sql`.
 
 ## Segurança
 - Não publicar `.env`, credenciais ou segredos de sessão.
