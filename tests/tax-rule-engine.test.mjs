@@ -49,6 +49,11 @@ test("only active rules within their effective period may be selected", () => {
   assert.equal(isRuleEffectiveOn(rule, "2027-01-01"), false);
   assert.equal(isRuleEffectiveOn({ ...rule, status: "approved" }, "2026-02-01"), false);
   assert.equal(isRuleEffectiveOn(rule, "2026-02-31"), false, "datas impossíveis não devem seleccionar uma regra");
+  const databaseRule = activeRule("percentage_of_base", { ratePercent: 10 }, {
+    effective_from: new Date("2026-01-01T00:00:00.000Z"),
+    effective_to: new Date("2026-12-31T00:00:00.000Z"),
+  });
+  assert.equal(isRuleEffectiveOn(databaseRule, "2026-10-29"), true, "datas devolvidas pelo PostgreSQL também devem ser normalizadas");
 });
 
 test("the engine rejects unapproved rules and invalid monetary inputs", () => {
