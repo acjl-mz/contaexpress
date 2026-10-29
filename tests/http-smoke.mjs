@@ -89,11 +89,12 @@ try {
     headers: { cookie: sessionCookie },
   });
   assert.equal(logout.status, 200, "logout deve terminar com sucesso");
+  assert.match(logout.headers.get("set-cookie") || "", /max-age=0/i, "logout deve instruir o navegador a limpar o cookie de sessão");
 
   const afterLogout = await fetch(`${baseUrl}/api/auth/me`);
   assert.equal(afterLogout.status, 401, "após logout, a sessão não deve ser reutilizada");
 
-  console.log("HTTP smoke tests: 8 verificações aprovadas.");
+  console.log("HTTP smoke tests: autenticação, sessão, acesso a empresas e logout verificados.");
 } finally {
   server.kill("SIGTERM");
   await new Promise(resolve => {
