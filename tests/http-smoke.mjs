@@ -136,6 +136,7 @@ try {
   assert.ok(pdfBytes.subarray(0, 8).toString("ascii").startsWith("%PDF-1."), "download deve conter um documento PDF válido");
 
   const adminEntity = companyPayload.company.id;
+  fixtureIds.adminEntity = adminEntity;
   const adminYear = (await fixtureClient.query("INSERT INTO fiscal_years (accounting_entity_id, label, starts_on, ends_on) VALUES ($1, 'HTTP-REVERSAL', '2026-01-01', '2026-12-31') RETURNING id", [adminEntity])).rows[0].id;
   const adminPeriod = (await fixtureClient.query("INSERT INTO accounting_periods (accounting_entity_id, fiscal_year_id, label, starts_on, ends_on) VALUES ($1, $2, 'HTTP-REVERSAL', '2026-01-01', '2026-12-31') RETURNING id", [adminEntity, adminYear])).rows[0].id;
   const adminJournal = (await fixtureClient.query("INSERT INTO accounting_journals (accounting_entity_id, code, name) VALUES ($1, 'HTTPREV', 'HTTP reversal test') RETURNING id", [adminEntity])).rows[0].id;
@@ -182,6 +183,16 @@ try {
       await fixtureClient.query("DELETE FROM organisation_memberships WHERE organisation_id = $1 AND user_id = $2", [f.org, f.user]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM app_users WHERE id = $1", [f.user]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM organisations WHERE id = $1", [f.org]).catch(() => undefined);
+      if (f.adminEntity) {
+        await fixtureClient.query("DELETE FROM journal_entry_lines WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM journal_entries WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM audit_events WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM chart_of_accounts WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM accounting_journals WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM accounting_periods WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM fiscal_years WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM accounting_entities WHERE id = $1", [f.adminEntity]).catch(() => undefined);
+      }
     }
     await fixtureClient.query("SET session_replication_role = origin").catch(() => undefined);
     await fixtureClient.end().catch(() => undefined);
