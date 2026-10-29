@@ -32,7 +32,7 @@ if [[ -n "$BACKUP_GPG_RECIPIENT" ]]; then
   gpg --batch --yes --trust-model always --recipient "$BACKUP_GPG_RECIPIENT" --output "$encrypted_file" --encrypt "$backup_file"
   sha256sum "$encrypted_file" > "$encrypted_file.sha256"
   chmod 600 "$encrypted_file" "$encrypted_file.sha256"
-  printf "backup_file=%s\n" "$(basename "$encrypted_file")" >> "$metadata_file"
+  sed -i "s|^backup_file=.*|backup_file=$(basename "$encrypted_file")|" "$metadata_file"
   rm -f "$backup_file" "$backup_file.sha256"
   echo "Backup cifrado: $encrypted_file"
 fi
