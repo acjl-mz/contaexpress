@@ -86,7 +86,10 @@ Nenhuma etapa é considerada concluída apenas porque a interface existe. Exige 
 - [x] Calendário de obrigações fiscais com tipo, período, prazo, valor previsto, referência e estado.
 - [x] Controlo de acesso por sessão e empresa, validação dos dados e auditoria das operações.
 - [x] Interfaces de tesouraria e fiscalidade e ligação à navegação principal.
-- [ ] Integração de movimentos com lançamentos contabilísticos, com regras de correspondência e prevenção de duplicação.
+- [x] Mapeamento por conta de tesouraria, direcção e categoria para contas do razão.
+- [x] Preparação transaccional de rascunhos contabilísticos equilibrados, com ligação ao movimento original e prevenção de duplicação.
+- [x] Testes de schema para o vínculo contabilístico e smoke tests de autenticação dos endpoints de mapeamento e preparação.
+- [ ] Confirmação de lançamento a partir da tesouraria e validação de permissões de ponta a ponta com sessão autenticada.
 - [ ] Importação de extractos bancários e reconciliação automática/assistida.
 - [ ] Motor fiscal com regras versionadas, validação profissional e calendário legal actualizado de Moçambique.
 - [ ] Testes de integração específicos e revisão das permissões de tesouraria e fiscalidade.
