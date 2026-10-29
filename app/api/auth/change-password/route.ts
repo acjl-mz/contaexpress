@@ -45,6 +45,10 @@ export async function POST(request: NextRequest) {
       await client.query("ROLLBACK");
       return NextResponse.json({ error: "A conta não está disponível para alteração da palavra-passe." }, { status: 401 });
     }
+    if (Number(current.session_version) !== Number(user.sessionVersion ?? 0)) {
+      await client.query("ROLLBACK");
+      return NextResponse.json({ error: "A sessão já foi invalidada. Inicie sessão novamente." }, { status: 401 });
+    }
 
     const validCurrentPassword = await compare(currentPassword, current.password_hash);
     if (!validCurrentPassword) {
