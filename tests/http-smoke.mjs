@@ -24,6 +24,7 @@ const server = spawn(process.execPath, [
 let serverOutput = "";
 let fixtureClient;
 let fixtureIds;
+let taxFixtureIds;
 server.stdout.on("data", chunk => { serverOutput += chunk.toString(); });
 server.stderr.on("data", chunk => { serverOutput += chunk.toString(); });
 
@@ -231,6 +232,108 @@ try {
   assert.equal(statementStatus.rows[0].status,"matched","a linha do extracto deve ficar marcada como correspondida");
   assert.equal(statementStatus.rows[0].treasury_transaction_id,matchingTransaction,"a correspondência deve manter a referência do movimento");
 
+  // Versioned tax-rule workflow: draft -> review -> independent approval -> activation -> preview -> retirement.
+  const adminOrganisation = (await fixtureClient.query(
+    "SELECT organisation_id FROM accounting_entities WHERE id=$1",
+    [adminEntity],
+  )).rows[0].organisation_id;
+  const taxReviewerEmail = "http-tax-reviewer-" + Date.now() + "@example.test";
+  const taxReviewerPassword = "CI-tax-reviewer-password-long-123";
+  const taxReviewerHash = await hash(taxReviewerPassword, 10);
+  const taxReviewerId = (await fixtureClient.query(
+    "INSERT INTO app_users (email,full_name,password_hash,status) VALUES ($1,'HTTP Tax Reviewer',$2,'active') RETURNING id",
+    [taxReviewerEmail,taxReviewerHash],
+  )).rows[0].id;
+  await fixtureClient.query(
+    "INSERT INTO organisation_memberships (organisation_id,user_id,role) VALUES ($1,$2,'tax_officer')",
+    [adminOrganisation,taxReviewerId],
+  );
+  taxFixtureIds = { organisation: adminOrganisation, reviewerId: taxReviewerId };
+
+  const anonymousTaxRules = await fetch(baseUrl + "/api/tax/rules");
+  assert.equal(anonymousTaxRules.status,401,"registo de regras fiscais deve exigir sessão");
+  const draftRuleResponse = await fetch(baseUrl + "/api/tax/rules",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({
+      ruleKey:"ci.test-rule-" + Date.now(),taxType:"OTHER",title:"Regra fiscal de teste CI",
+      description:"Regra artificial exclusiva dos testes automatizados; não representa legislação real.",
+      calculationMethod:"percentage_of_base",parameters:{ratePercent:10,roundingScale:2},
+      effectiveFrom:"2026-01-01",effectiveTo:"2026-12-31",
+      legalReference:"Fixture CI — referência fictícia para testes",
+      sourceUrl:"https://example.test/ci-tax-rule-fixture",sourcePublishedOn:"2026-01-01",
+    }),
+  });
+  assert.equal(draftRuleResponse.status,201,"superadministrador deve conseguir criar uma versão de teste em rascunho");
+  const draftRulePayload = await draftRuleResponse.json();
+  const taxRuleId = draftRulePayload.rule.id;
+  const taxRuleKey = draftRulePayload.rule.ruleKey;
+  taxFixtureIds.ruleId = taxRuleId;
+  assert.equal(draftRulePayload.rule.status,"draft","versão nova deve começar em rascunho");
+
+  const calcBeforeApproval = await fetch(baseUrl + "/api/tax/calculate",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({entityId:adminEntity,ruleKey:taxRuleKey,baseAmount:1000,asOfDate:"2026-10-29"}),
+  });
+  assert.equal(calcBeforeApproval.status,409,"regra não aprovada nunca pode ser usada por defeito");
+
+  const submitRule = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
+    method:"PATCH",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"submit_review"}),
+  });
+  assert.equal(submitRule.status,200,"rascunho deve poder seguir para revisão");
+  assert.equal((await submitRule.json()).rule.status,"in_review");
+
+  const selfApproval = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
+    method:"PATCH",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"approve",sourceVerifiedOn:new Date().toISOString().slice(0,10),reviewNotes:"Esta tentativa de autoaprovação deve ser rejeitada pelo workflow."}),
+  });
+  assert.equal(selfApproval.status,403,"autor da regra não pode aprovar a própria versão");
+
+  const reviewerLogin = await fetch(baseUrl + "/api/auth/login",{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({email:taxReviewerEmail,password:taxReviewerPassword}),
+  });
+  assert.equal(reviewerLogin.status,200,"responsável fiscal de teste deve conseguir iniciar sessão");
+  const reviewerCookie = (reviewerLogin.headers.get("set-cookie")||"").split(";")[0];
+  const approval = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
+    method:"PATCH",headers:{cookie:reviewerCookie,"content-type":"application/json"},
+    body:JSON.stringify({
+      action:"approve",sourceVerifiedOn:new Date().toISOString().slice(0,10),
+      reviewNotes:"Fonte de teste conferida para o CI; nenhum diploma real é representado por esta fixture.",
+    }),
+  });
+  assert.equal(approval.status,200,"outro responsável fiscal deve poder aprovar após registar revisão da fonte");
+  assert.equal((await approval.json()).rule.status,"approved");
+
+  const activateRule = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
+    method:"PATCH",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"activate"}),
+  });
+  assert.equal(activateRule.status,200,"superadministrador deve activar versão aprovada");
+  assert.equal((await activateRule.json()).rule.status,"active");
+
+  const taxPreview = await fetch(baseUrl + "/api/tax/calculate",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({entityId:adminEntity,ruleKey:taxRuleKey,baseAmount:1000,asOfDate:"2026-10-29"}),
+  });
+  assert.equal(taxPreview.status,200,"regra activa e em vigência deve permitir simulação");
+  const taxPreviewPayload = await taxPreview.json();
+  assert.equal(taxPreviewPayload.preview.amount,100,"simulação deve usar a taxa explicitamente configurada na fixture");
+  assert.equal(taxPreviewPayload.preview.version,1);
+  assert.match(taxPreviewPayload.notice,/não cria obrigação/i);
+
+  const retireRule = await fetch(baseUrl + "/api/tax/rules/" + encodeURIComponent(taxRuleId),{
+    method:"PATCH",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({action:"retire"}),
+  });
+  assert.equal(retireRule.status,200,"superadministrador deve retirar uma versão activa");
+  assert.equal((await retireRule.json()).rule.status,"retired");
+  const calcAfterRetirement = await fetch(baseUrl + "/api/tax/calculate",{
+    method:"POST",headers:{cookie:sessionCookie,"content-type":"application/json"},
+    body:JSON.stringify({entityId:adminEntity,ruleKey:taxRuleKey,baseAmount:1000,asOfDate:"2026-10-29"}),
+  });
+  assert.equal(calcAfterRetirement.status,409,"versão retirada não pode continuar a ser usada");
+
   const adminYear = (await fixtureClient.query("INSERT INTO fiscal_years (accounting_entity_id, label, starts_on, ends_on) VALUES ($1, 'HTTP-REVERSAL', '2026-01-01', '2026-12-31') RETURNING id", [adminEntity])).rows[0].id;
   const adminPeriod = (await fixtureClient.query("INSERT INTO accounting_periods (accounting_entity_id, fiscal_year_id, label, starts_on, ends_on) VALUES ($1, $2, 'HTTP-REVERSAL', '2026-01-01', '2026-12-31') RETURNING id", [adminEntity, adminYear])).rows[0].id;
   const adminJournal = (await fixtureClient.query("INSERT INTO accounting_journals (accounting_entity_id, code, name) VALUES ($1, 'HTTPREV', 'HTTP reversal test') RETURNING id", [adminEntity])).rows[0].id;
@@ -279,6 +382,16 @@ try {
 } finally {
   if (fixtureClient) {
     await fixtureClient.query("SET session_replication_role = replica").catch(() => undefined);
+    if (taxFixtureIds) {
+      if (taxFixtureIds.ruleId) {
+        await fixtureClient.query("DELETE FROM tax_rule_audit_events WHERE rule_version_id=$1", [taxFixtureIds.ruleId]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM tax_rule_versions WHERE id=$1", [taxFixtureIds.ruleId]).catch(() => undefined);
+      }
+      if (taxFixtureIds.reviewerId) {
+        await fixtureClient.query("DELETE FROM organisation_memberships WHERE organisation_id=$1 AND user_id=$2", [taxFixtureIds.organisation,taxFixtureIds.reviewerId]).catch(() => undefined);
+        await fixtureClient.query("DELETE FROM app_users WHERE id=$1", [taxFixtureIds.reviewerId]).catch(() => undefined);
+      }
+    }
     if (fixtureIds) {
       const f = fixtureIds;
       await fixtureClient.query("DELETE FROM journal_entry_lines WHERE accounting_entity_id = $1", [f.entity]).catch(() => undefined);
