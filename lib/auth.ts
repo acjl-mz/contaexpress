@@ -20,6 +20,7 @@ export type SessionUser = {
   fullName: string;
   organisationId: string;
   role: string;
+  sessionVersion?: number;
 };
 
 export async function createSession(user: SessionUser) {
@@ -28,6 +29,7 @@ export async function createSession(user: SessionUser) {
     fullName: user.fullName,
     organisationId: user.organisationId,
     role: user.role,
+    sessionVersion: user.sessionVersion ?? 0,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
@@ -57,7 +59,7 @@ export async function getSession(): Promise<SessionUser | null> {
     const { payload } = await jwtVerify(token, sessionKey(), { algorithms: ["HS256"] });
     if (!payload.sub || typeof payload.email !== "string" || typeof payload.fullName !== "string" || typeof payload.organisationId !== "string" || typeof payload.role !== "string") return null;
     const result = await db.query(
-      `SELECT u.id, u.email, u.full_name, om.organisation_id, om.role
+      `SELECT u.id, u.email, u.full_name, u.session_version, om.organisation_id, om.role
        FROM app_users u
        JOIN organisation_memberships om ON om.user_id = u.id
        JOIN organisations o ON o.id = om.organisation_id AND o.status = 'active'
@@ -68,7 +70,8 @@ export async function getSession(): Promise<SessionUser | null> {
     );
     const current = result.rows[0];
     if (!current) return null;
-    return { id: current.id, email: current.email, fullName: current.full_name, organisationId: current.organisation_id, role: current.role };
+    if (typeof payload.sessionVersion !== "number" || payload.sessionVersion !== current.session_version) return null;
+    return { id: current.id, email: current.email, fullName: current.full_name, organisationId: current.organisation_id, role: current.role, sessionVersion: current.session_version };
   } catch {
     return null;
   }
