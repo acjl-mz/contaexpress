@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS tax_rule_audit_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   rule_version_id UUID NOT NULL REFERENCES tax_rule_versions(id) ON DELETE RESTRICT,
   actor_user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE RESTRICT,
-  event_type TEXT NOT NULL CHECK (event_type IN ('created','submitted_for_review','approved','activated','retired')),
+  event_type TEXT NOT NULL CHECK (event_type IN ('created','submitted_for_review','approved','activated','retired','calculation_preview')),
   details JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(details) = 'object'),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
