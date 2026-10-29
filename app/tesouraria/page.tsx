@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDownLeft, ArrowLeft, ArrowUpRight, Building2, CheckCircle2, CircleAlert, Landmark, Plus, RefreshCw, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowLeft, ArrowUpRight, CheckCircle2, CircleAlert, Landmark, Plus, RefreshCw, Wallet } from "lucide-react";
 
 type Company={id:string;legalName:string;currency:string};
 type Account={id:string;name:string;accountType:string;institution:string|null;accountReference:string|null;currency:string;openingBalance:string;isActive:boolean};
