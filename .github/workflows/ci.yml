@@ -60,6 +60,8 @@ jobs:
         run: npm run bootstrap:admin
       - name: Unit tests
         run: npm run test:unit
+      - name: PostgreSQL integration tests
+        run: npm run test:integration
       - name: TypeScript
         run: npm run typecheck
       - name: ESLint
