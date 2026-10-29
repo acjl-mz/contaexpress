@@ -104,15 +104,11 @@ test("PostgreSQL reversal is balanced, linked, one-time, and respects closed per
     );
     assert.equal(Number(net.rows[0].net), 0);
 
-    const duplicateReversal = (await client.query(
-      "INSERT INTO journal_entries (accounting_entity_id, period_id, journal_id, entry_date, description, created_by, reverses_entry_id) VALUES ($1, $2, $3, '2026-10-12', 'Estorno duplicado', $4, $5) RETURNING id",
-      [entity, period, journal, user, original],
-    )).rows[0].id;
     await expectQueryError(
       client,
-      "INSERT INTO journal_entry_lines (accounting_entity_id, entry_id, line_number, account_id, debit, credit) VALUES ($1, $2, 1, $3, 800, 0), ($1, $2, 2, $4, 0, 800)",
-      [entity, duplicateReversal, debitAccount, creditAccount],
-      /./,
+      "INSERT INTO journal_entries (accounting_entity_id, period_id, journal_id, entry_date, description, created_by, reverses_entry_id) VALUES ($1, $2, $3, '2026-10-12', 'Estorno duplicado', $4, $5)",
+      [entity, period, journal, user, original],
+      /journal_entries_single_reversal_idx|duplicate key/i,
     );
     await expectQueryError(
       client,
