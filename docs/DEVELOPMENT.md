@@ -33,6 +33,8 @@ A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e conf
 - O fecho mensal usa uma checklist padrão por período e só permite encerrar quando os itens obrigatórios estão concluídos, não existem lançamentos em rascunho e os débitos igualam os créditos.
 
 ## Verificações
+- `npm run test:unit` — testes puros de validação de datas e cálculos dos relatórios.
+- `npm run test:integration` — testes PostgreSQL; requer `DATABASE_URL` e todas as migrações aplicadas.
 - `npm run typecheck`
 - `npm run lint`
 - `npm run build`
