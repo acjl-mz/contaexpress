@@ -66,19 +66,36 @@ export async function POST(request: NextRequest) {
         [periodId, entityId],
       );
       if (!period.rowCount) { await client.query("ROLLBACK"); return NextResponse.json({ error: "Período não encontrado nesta empresa." }, { status: 404 }); }
-      const existing = await client.query(
-        "SELECT id FROM accounting_period_closes WHERE accounting_entity_id = $1 AND accounting_period_id = $2 FOR UPDATE",
+      if (period.rows[0].status !== "open") {
+        await client.query("ROLLBACK");
+        return NextResponse.json({ error: "Não é possível preparar um fecho para um período já encerrado.", code: "PERIOD_CLOSED" }, { status: 409 });
+      }
+
+      // The unique constraint on (accounting_entity_id, accounting_period_id)
+      // arbitrates concurrent requests, including the case where no row existed
+      // to lock. Only the request that inserts the row creates the checklist.
+      const inserted = await client.query(
+        `INSERT INTO accounting_period_closes (accounting_entity_id, accounting_period_id, created_by)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (accounting_entity_id, accounting_period_id) DO NOTHING
+         RETURNING id`,
+        [entityId, periodId, user.id],
+      );
+      const created = inserted.rowCount === 1;
+      const closeResult = await client.query(
+        "SELECT id, status FROM accounting_period_closes WHERE accounting_entity_id = $1 AND accounting_period_id = $2 FOR UPDATE",
         [entityId, periodId],
       );
-      let closeId = existing.rows[0]?.id;
-      if (!closeId) {
-        const created = await client.query(
-          "INSERT INTO accounting_period_closes (accounting_entity_id, accounting_period_id, created_by) VALUES ($1, $2, $3) RETURNING id",
-          [entityId, periodId, user.id],
-        );
-        closeId = created.rows[0].id;
+      const closeId = closeResult.rows[0]?.id;
+      if (!closeId) throw new Error("Não foi possível obter o fecho mensal após a criação.");
+      if (closeResult.rows[0].status === "closed") {
+        await client.query("ROLLBACK");
+        return NextResponse.json({ error: "Este fecho mensal já está encerrado.", code: "CLOSE_ALREADY_CLOSED" }, { status: 409 });
+      }
+
+      if (created) {
         for (let i = 0; i < DEFAULT_ITEMS.length; i++) {
-          const [key, title, description] = DEFAULT_ITEMS[i];
+          const [, title, description] = DEFAULT_ITEMS[i];
           await client.query(
             "INSERT INTO accounting_period_close_items (accounting_entity_id, close_id, title, description, sort_order) VALUES ($1, $2, $3, $4, $5)",
             [entityId, closeId, title, description, i],
@@ -92,7 +109,7 @@ export async function POST(request: NextRequest) {
         );
       }
       await client.query("COMMIT");
-      return NextResponse.json({ closeId, created: !existing.rowCount }, { status: existing.rowCount ? 200 : 201 });
+      return NextResponse.json({ closeId, created }, { status: created ? 201 : 200 });
     } catch (error) { await client.query("ROLLBACK").catch(() => undefined); throw error; }
     finally { client.release(); }
   } catch (error) {
