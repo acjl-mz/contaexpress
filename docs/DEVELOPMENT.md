@@ -32,6 +32,8 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/011_treasury_tax.
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/012_treasury_accounting_integration.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/013_bank_statement_reconciliation.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/014_tax_rule_registry.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/015_organisation_invitations.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/014_tax_rule_registry.sql
 ```
 A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e configurar a variável `DATABASE_URL`.
 
