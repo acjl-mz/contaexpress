@@ -86,6 +86,19 @@ try {
   assert.equal(anonymousTreasury.status, 401, "tesouraria deve exigir sessão");
   const anonymousTax = await fetch(`${baseUrl}/api/tax/obligations?entityId=00000000-0000-0000-0000-000000000000`);
   assert.equal(anonymousTax.status, 401, "fiscalidade deve exigir sessão");
+
+  const anonymousInvitations = await fetch(baseUrl + "/api/organisation-invitations");
+  assert.equal(anonymousInvitations.status,401,"gestão de convites deve exigir sessão");
+  const anonymousInvitationCreate = await fetch(baseUrl + "/api/organisation-invitations",{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({email:"invited@example.test",role:"accountant"}),
+  });
+  assert.equal(anonymousInvitationCreate.status,401,"criação de convites deve exigir sessão");
+  const invalidInvitationAccept = await fetch(baseUrl + "/api/organisation-invitations/accept",{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({token:"a".repeat(64),fullName:"HTTP Test Invitee",password:"CI-invitation-password-long-2026",confirmPassword:"CI-invitation-password-long-2026"}),
+  });
+  assert.equal(invalidInvitationAccept.status,400,"aceitação deve rejeitar token inexistente");
   const anonymousMappings = await fetch(baseUrl + "/api/treasury/mappings?entityId=00000000-0000-0000-0000-000000000000");
   assert.equal(anonymousMappings.status, 401, "mapeamentos contabilísticos devem exigir sessão");
   const anonymousPosting = await fetch(baseUrl + "/api/treasury/post", {
