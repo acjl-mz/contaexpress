@@ -34,7 +34,7 @@ A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e conf
 
 ## Verificações
 - `npm run test:unit` — testes puros de validação de datas e cálculos dos relatórios.
-- `npm run test:integration` — testes PostgreSQL; requer `DATABASE_URL` e todas as migrações aplicadas.
+- `npm run test:integration` — testes PostgreSQL de lançamentos e relatórios; requer `DATABASE_URL` e todas as migrações aplicadas. A suite de relatórios cria dados de teste numa transacção e reverte-a no final.
 - `npm run typecheck`
 - `npm run lint`
 - `npm run build`
