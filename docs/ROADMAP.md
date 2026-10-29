@@ -13,7 +13,8 @@
 - [x] API inicial de registo e listagem de empresas com autorização no servidor.
 - [x] Registo de auditoria para criação de empresa.
 - [x] Rate limiting inicial para tentativas repetidas de login por e-mail e IP (requer migração 006).
-- [ ] Testes automatizados de segurança e concorrência para o rate limiting.
+- [x] Teste HTTP de rate limiting: após oito tentativas falhadas para o mesmo e-mail, novas tentativas são limitadas com HTTP 429.
+- [ ] Testes concorrentes do rate limiting e limitação distribuída sob múltiplas instâncias.
 - [ ] Fluxo de convite, recuperação e alteração de palavra-passe.
 - [x] Teste de integração PostgreSQL para isolamento multempresa e concessão/revogação de acesso explícito por entidade.
 - [x] Teste de integração PostgreSQL para impedir confirmação por auditores e validar numeração sequencial por diário.
