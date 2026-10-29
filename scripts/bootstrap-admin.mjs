@@ -33,6 +33,10 @@ try {
     [org.rows[0].id, user.rows[0].id],
   );
   await client.query(
+    "INSERT INTO platform_administrators (user_id, granted_by_user_id, note) VALUES ($1, $1, $2)",
+    [user.rows[0].id, "Primeiro administrador da instalação, criado pelo bootstrap controlado."],
+  );
+  await client.query(
     "INSERT INTO audit_events (organisation_id, actor_user_id, event_type, target_type, target_id, details) VALUES ($1, $2, 'admin.bootstrap', 'app_user', $3, $4::jsonb)",
     [org.rows[0].id, user.rows[0].id, String(user.rows[0].id), JSON.stringify({ email, setup: "one-time-script" })],
   );
