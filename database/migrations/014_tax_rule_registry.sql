@@ -1,5 +1,14 @@
 BEGIN;
 
+-- Shared national tax rules affect every organisation; management permissions
+-- therefore require an explicit platform-level grant, not just tenant superadmin.
+CREATE TABLE IF NOT EXISTS platform_administrators (
+  user_id UUID PRIMARY KEY REFERENCES app_users(id) ON DELETE RESTRICT,
+  granted_by_user_id UUID REFERENCES app_users(id) ON DELETE RESTRICT,
+  note TEXT NOT NULL CHECK (length(trim(note)) BETWEEN 5 AND 500),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- National rules are global reference data, not tenant-owned tax calculations.
 -- No live rates are seeded: a rule cannot be activated without source verification
 -- and an independent approval recorded by a different user from its author.
