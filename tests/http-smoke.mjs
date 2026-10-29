@@ -58,6 +58,9 @@ try {
   const anonymousCompanies = await fetch(`${baseUrl}/api/companies`);
   assert.equal(anonymousCompanies.status, 401, "listagem de empresas deve exigir sessão");
 
+  const anonymousPdf = await fetch(`${baseUrl}/api/accounting/reports/pdf?entityId=00000000-0000-0000-0000-000000000000`);
+  assert.equal(anonymousPdf.status, 401, "exportação PDF deve exigir sessão");
+
   const login = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -83,6 +86,20 @@ try {
   assert.equal(authenticatedCompanies.status, 200, "utilizador autenticado deve poder listar as suas empresas");
   const companiesPayload = await authenticatedCompanies.json();
   assert.ok(Array.isArray(companiesPayload.companies), "resposta de empresas deve conter uma lista");
+
+  const createCompany = await fetch(`${baseUrl}/api/companies`, {
+    method: "POST", headers: { cookie: sessionCookie, "content-type": "application/json" },
+    body: JSON.stringify({ legalName: `HTTP PDF Test ${Date.now()}`, countryCode: "MZ", currency: "MZN" }),
+  });
+  assert.equal(createCompany.status, 201, "administrador autenticado deve conseguir criar empresa de teste");
+  const companyPayload = await createCompany.json();
+  const pdfResponse = await fetch(`${baseUrl}/api/accounting/reports/pdf?entityId=${encodeURIComponent(companyPayload.company.id)}&report=trial-balance&from=2026-01-01&to=2026-12-31`, {
+    headers: { cookie: sessionCookie },
+  });
+  assert.equal(pdfResponse.status, 200, "exportação PDF deve funcionar para uma empresa autorizada");
+  assert.match(pdfResponse.headers.get("content-type") || "", /application\\/pdf/i);
+  const pdfBytes = Buffer.from(await pdfResponse.arrayBuffer());
+  assert.ok(pdfBytes.subarray(0, 8).toString("ascii").startsWith("%PDF-1."), "download deve conter um documento PDF válido");
 
   const logout = await fetch(`${baseUrl}/api/auth/logout`, {
     method: "POST",
