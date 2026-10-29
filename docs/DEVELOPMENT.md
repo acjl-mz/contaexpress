@@ -82,7 +82,7 @@ Estas instruções descrevem a configuração prevista; os comandos deverão ser
 
 
 ## Integração de Tesouraria com Contabilidade
-- Aplicar as migrações `011_treasury_tax.sql` e `012_treasury_accounting_integration.sql` depois das migrações 001–010.
+- Aplicar as migrações `011_treasury_tax.sql`, `012_treasury_accounting_integration.sql` e `013_bank_statement_reconciliation.sql` pela ordem numérica, depois das migrações 001–010.
 - Em `/tesouraria`, configure um mapeamento por conta de tesouraria, direcção (entrada/saída) e categoria. Associe uma conta do razão para tesouraria e uma conta de contrapartida; ambas devem pertencer à mesma empresa e permitir movimentos.
 - A acção **Preparar lançamento** cria um rascunho no diário geral, usando o período aberto que contém a data do movimento. Para entradas, debita a conta de tesouraria e credita a contrapartida; para saídas, faz o inverso.
 - O movimento guarda o identificador do lançamento e uma referência de origem única, para que repetição do pedido não crie um segundo lançamento. O rascunho não é confirmado automaticamente: um contabilista autorizado deve revê-lo e confirmá-lo no diário geral.
