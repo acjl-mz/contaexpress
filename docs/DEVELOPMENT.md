@@ -51,7 +51,8 @@ A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e conf
 - O login limita tentativas falhadas por e-mail e endereço IP numa janela de 15 minutos; aplicar a migração `006_login_rate_limit.sql`. A identificação do IP depende dos cabeçalhos confiáveis do proxy/plataforma de alojamento.
 - O arquivo documental aceita PDF, JPG, PNG, CSV, XLSX e DOCX até 8 MB, exige acesso à empresa e guarda os ficheiros em PostgreSQL; aplicar `007_accounting_documents.sql`.
 - O módulo de tarefas mantém histórico de criação e actualizações, estados, prioridade e prazo; aplicar `008_accounting_tasks.sql`.
-- Antes de produção, validar a política de retenção de auditoria, backups e ensaios de restauração.
+- O backup utiliza `pg_dump` em formato customizado e gera checksum SHA-256 e metadados; guardar cópias cifradas fora do servidor de aplicação, com retenção definida e acesso restrito. Os scripts não configuram por si só um agendamento nem cifram os ficheiros.
+- Antes de produção, definir agendamento, retenção, armazenamento externo cifrado, alertas de falha e RPO/RTO; realizar ensaios de restauração periódicos num destino isolado.
 - A API contabilística valida a associação à empresa, período aberto e contas movimentáveis; a confirmação exige igualdade entre débitos e créditos.
 - O plano de contas disponibilizado é apenas uma estrutura inicial de referência e deve ser validado por um profissional antes de utilização contabilística real.
 - O diário geral, o razão e o balancete incluem lançamentos confirmados e estornos formais; validar os totais com dados de teste antes de utilização produtiva.
