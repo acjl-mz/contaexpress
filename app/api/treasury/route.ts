@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
         FROM treasury_accounts WHERE accounting_entity_id=$1 ORDER BY is_active DESC, name LIMIT 200`, [entityId]),
       db.query(`SELECT t.id, t.treasury_account_id AS "accountId", a.name AS "accountName",
         t.transaction_date AS "transactionDate", t.direction, t.category, t.description, t.amount,
-        t.reference, t.counterparty, t.status, t.created_at AS "createdAt"
+        t.reference, t.counterparty, t.status, t.journal_entry_id AS "journalEntryId", t.created_at AS "createdAt"
         FROM treasury_transactions t JOIN treasury_accounts a ON a.id=t.treasury_account_id AND a.accounting_entity_id=t.accounting_entity_id
         WHERE t.accounting_entity_id=$1 AND t.status <> 'voided'
         ORDER BY t.transaction_date DESC, t.created_at DESC LIMIT 500`, [entityId]),
