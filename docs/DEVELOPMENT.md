@@ -79,3 +79,11 @@ Estas instruções descrevem a configuração prevista; os comandos deverão ser
 - `/tesouraria` permite registar contas de caixa/banco/carteira móvel, movimentos de entrada/saída e marcar movimentos como reconciliados. O movimento líquido é apenas um total dos movimentos registados; não equivale ao saldo real de caixa/banco nem inclui automaticamente o saldo inicial.
 - `/fiscalidade` mantém um calendário manual de obrigações fiscais e estados de preparação, submissão e pagamento. Os tipos disponíveis incluem IVA, IRPS, IRPC, ISPC, INSS e outros.
 - Estes módulos não geram ainda lançamentos contabilísticos automáticos, não calculam impostos nem submetem declarações. A aplicação de taxas e prazos deve ser validada face à legislação e às instruções vigentes em Moçambique.
+
+
+## Integração de Tesouraria com Contabilidade
+- Aplicar as migrações `011_treasury_tax.sql` e `012_treasury_accounting_integration.sql` depois das migrações 001–010.
+- Em `/tesouraria`, configure um mapeamento por conta de tesouraria, direcção (entrada/saída) e categoria. Associe uma conta do razão para tesouraria e uma conta de contrapartida; ambas devem pertencer à mesma empresa e permitir movimentos.
+- A acção **Preparar lançamento** cria um rascunho no diário geral, usando o período aberto que contém a data do movimento. Para entradas, debita a conta de tesouraria e credita a contrapartida; para saídas, faz o inverso.
+- O movimento guarda o identificador do lançamento e uma referência de origem única, para que repetição do pedido não crie um segundo lançamento. O rascunho não é confirmado automaticamente: um contabilista autorizado deve revê-lo e confirmá-lo no diário geral.
+- Se não houver mapeamento, diário geral ou período aberto, a API devolve um erro de validação em vez de criar um lançamento incompleto.
