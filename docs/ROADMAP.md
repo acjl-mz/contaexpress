@@ -16,7 +16,9 @@
 - [ ] Testes automatizados de segurança e concorrência para o rate limiting.
 - [ ] Fluxo de convite, recuperação e alteração de palavra-passe.
 - [x] Teste de integração PostgreSQL para isolamento multempresa e concessão/revogação de acesso explícito por entidade.
+- [x] Teste de integração PostgreSQL para impedir confirmação por auditores e validar numeração sequencial por diário.
 - [ ] Testes HTTP de autenticação, permissões por função e isolamento multempresa.
+- [ ] Testes concorrentes reais para confirmações e estornos simultâneos.
 
 ## Etapa 3 — Núcleo contabilístico
 - [x] Estrutura inicial de plano de contas e API de consulta/criação.
