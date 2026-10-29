@@ -104,7 +104,7 @@ h2{font-size:17px;margin:0;font-weight:800}
 .auth-form{display:grid;gap:10px}
 .auth-form label,.form-field label{font-size:11px;font-weight:700;color:#435762}
 .field-wrap{height:44px;border:1px solid #dce4e8;border-radius:8px;display:flex;align-items:center;gap:10px;padding:0 12px;color:#8a9aa3;margin-bottom:9px}
-.field-wrap:focus-within,.form-field input:focus,.form-field select:focus,.search-field:focus-within{outline:2px solid #b6e1cf;outline-offset:1px;border-color:#71b99a}
+.field-wrap:focus-within,.form-field input:focus,.form-field select:focus,.form-field textarea:focus,.search-field:focus-within{outline:2px solid #b6e1cf;outline-offset:1px;border-color:#71b99a}
 .field-wrap input{border:0;outline:0;min-width:0;flex:1;font:inherit;font-size:12px;color:var(--ink);background:transparent}
 .field-wrap input::placeholder,.form-field input::placeholder{color:#a3adb4}
 .auth-submit{margin-top:8px;width:100%;height:44px}
@@ -124,6 +124,7 @@ h2{font-size:17px;margin:0;font-weight:800}
 .form-field{display:grid;gap:8px;min-width:0}
 .form-field.wide{grid-column:1/-1}
 .form-field input,.form-field select{width:100%;height:42px;border:1px solid #dce4e8;border-radius:7px;padding:0 11px;background:#fff;color:var(--ink);font:inherit;font-size:12px;outline:none}
+.form-field textarea{width:100%;min-height:78px;border:1px solid #dce4e8;border-radius:7px;padding:10px 11px;background:#fff;color:var(--ink);font:inherit;font-size:12px;line-height:1.55;outline:none;resize:vertical}
 .form-actions{display:flex;justify-content:flex-end;gap:9px;padding:20px 20px 0}
 .secondary-button{background:#fff;border:1px solid #dce4e8;border-radius:8px;padding:10px 14px;color:#516570;font-size:12px;font-weight:600}
 .company-table-panel{min-height:330px}
@@ -385,44 +386,3 @@ h2{font-size:17px;margin:0;font-weight:800}
 .companies-content .segmented-control button{border:0;background:transparent;border-radius:6px;padding:7px 10px;color:#637583;font-size:11px;cursor:pointer}
 .companies-content .segmented-control button.active{background:#fff;color:#12345a;box-shadow:0 1px 4px #152f4514}
 @media(max-width:680px){.companies-content .company-form-grid{grid-template-columns:1fr}.companies-content .form-field.wide{grid-column:auto}.companies-content .company-form{padding:0 14px 16px}.companies-content .panel-heading{padding:16px}.companies-toolbar .form-field{min-width:100%}.companies-content .form-actions{flex-direction:column-reverse}.companies-content .form-actions button{width:100%}}
-
-
-/* Account security */
-.security-card{width:min(100%,520px);max-width:520px}
-.security-back{display:inline-flex;align-items:center;gap:7px;margin:4px 0 28px;color:#647782;font-size:12px;font-weight:600}
-.security-notice{display:flex;align-items:flex-start;gap:11px;margin:20px 0;padding:14px 15px}
-.security-notice strong{display:block;font-size:12px;color:var(--ink)}
-.security-notice p{margin:5px 0 0;color:#687b85;font-size:12px;line-height:1.55}
-.security-help{margin:-3px 0 4px 2px;color:#87949c;font-size:11px;line-height:1.45}
-.security-success{display:flex;align-items:flex-start;gap:8px;margin:14px 0;padding:11px 12px;border-radius:8px;background:#eaf7ef;color:#287b58;font-size:12px;line-height:1.5}
-.avatar[href]{display:grid;place-items:center;text-decoration:none;cursor:pointer}
-.avatar[href]:focus-visible{outline:3px solid #9dd5b8;outline-offset:3px}
-@media(max-width:600px){.security-card{padding:24px 20px}.security-back{margin-bottom:22px}}
-
-
-/* Organisation invitations */
-.invitation-layout{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr);gap:24px;margin-top:28px;align-items:start}
-.invitation-panel{padding:22px;background:#fff;border:1px solid var(--line);border-radius:14px}
-.invitation-panel-heading,.invitation-list-heading{display:flex;align-items:flex-start;gap:12px}
-.invitation-panel-heading strong{font-size:14px;color:var(--ink)}
-.invitation-panel-heading p,.invitation-list-heading p{margin:5px 0 0;color:#71828b;font-size:12px;line-height:1.5}
-.invitation-panel .auth-form{margin-top:20px}
-.invitation-panel .auth-form input,.invitation-panel .auth-form select{width:100%;min-height:43px;border:1px solid var(--line);border-radius:8px;padding:0 11px;background:#fff;color:var(--ink);font:inherit;font-size:13px}
-.invitation-panel .auth-form select{margin-bottom:12px}
-.invitation-list{padding:22px;background:#fff;border:1px solid var(--line);border-radius:14px;min-width:0}
-.invitation-list-heading{justify-content:space-between;align-items:center;margin-bottom:16px}
-.invitation-list-heading h2{margin:0;color:var(--ink);font-size:16px}
-.invitation-table{display:flex;flex-direction:column}
-.invitation-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-top:1px solid #edf0f2}
-.invitation-person{display:flex;align-items:center;gap:10px;min-width:0}
-.invitation-person>div{display:flex;flex-direction:column;gap:4px;min-width:0}
-.invitation-person strong{font-size:12px;color:var(--ink);overflow-wrap:anywhere}
-.invitation-person small,.invitation-status small{font-size:11px;color:#7a8991}
-.invitation-avatar{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:50%;background:#eaf3ff;color:#183d70;font-size:13px;font-weight:700}
-.invitation-status{display:flex;flex-direction:column;align-items:flex-end;gap:5px;white-space:nowrap}
-.status-chip{display:inline-flex;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:700}
-.status-chip.pending{background:#fff4d8;color:#89611a}.status-chip.accepted{background:#e7f7ed;color:#287b58}.status-chip.revoked{background:#f0f1f2;color:#6d7880}
-.invitation-empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:36px 12px;text-align:center;color:#7a8991}
-.invitation-empty strong{font-size:13px;color:var(--ink)}.invitation-empty p{margin:0;font-size:12px}
-@media(max-width:850px){.invitation-layout{grid-template-columns:1fr}.invitation-list{min-width:0}}
-@media(max-width:480px){.invitation-item{align-items:flex-start;flex-direction:column}.invitation-status{align-items:flex-start;padding-left:44px}.invitation-panel,.invitation-list{padding:17px}}
