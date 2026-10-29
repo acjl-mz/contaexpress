@@ -67,9 +67,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         await client.query("ROLLBACK");
         return NextResponse.json({ error: "A pessoa que criou a versão não pode aprová-la." }, { status: 403 });
       }
-      if (!isRealDate(sourceVerifiedOn) || reviewNotes.length < 30) {
+      if (!isRealDate(sourceVerifiedOn) || sourceVerifiedOn > new Date().toISOString().slice(0, 10) || reviewNotes.length < 30) {
         await client.query("ROLLBACK");
-        return NextResponse.json({ error: "A aprovação exige data de verificação da fonte e nota de revisão com pelo menos 30 caracteres." }, { status: 400 });
+        return NextResponse.json({ error: "A aprovação exige uma data de verificação não futura e nota de revisão com pelo menos 30 caracteres." }, { status: 400 });
       }
       updated = await client.query(
         `UPDATE tax_rule_versions SET status='approved',source_verified_on=$2::date,
