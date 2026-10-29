@@ -71,6 +71,7 @@ jobs:
       - name: Database backup and restore drill
         run: |
           set -euo pipefail
+          export PGUSER=ci PGPASSWORD=ci PGHOST=127.0.0.1 PGPORT=5432
           export BACKUP_DIR="$RUNNER_TEMP/contaexpress-backup"
           bash scripts/db-backup.sh
           backup_file="$(find "$BACKUP_DIR" -maxdepth 1 -name "contaexpress-*.dump" -print -quit)"
