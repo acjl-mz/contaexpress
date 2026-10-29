@@ -540,6 +540,7 @@ try {
       if (f.adminEntity) {
         await fixtureClient.query("DELETE FROM bank_statement_lines WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM bank_statement_imports WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM treasury_posting_mappings WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM treasury_transactions WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM treasury_accounts WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
       await fixtureClient.query("DELETE FROM journal_entry_lines WHERE accounting_entity_id = $1", [f.adminEntity]).catch(() => undefined);
