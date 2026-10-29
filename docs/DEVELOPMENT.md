@@ -33,12 +33,15 @@ A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e conf
 - O fecho mensal usa uma checklist padrão por período e só permite encerrar quando os itens obrigatórios estão concluídos, não existem lançamentos em rascunho e os débitos igualam os créditos.
 
 ## Verificações
-- `npm run test:unit` — testes puros de validação de datas e cálculos dos relatórios.
-- `npm run test:all` — executa primeiro todos os testes unitários e depois os testes de integração PostgreSQL.
+- `npm run test:unit` — testes puros de validação de datas, cálculos dos relatórios e geração estrutural de PDF.
+- `npm run test:all` — executa primeiro todos os testes unitários e depois os testes de integração PostgreSQL, incluindo a confirmação concorrente de um lançamento.
 - `npm run test:integration` — testes PostgreSQL de lançamentos, relatórios, estornos, permissões, isolamento multempresa e idempotência do fecho mensal; requer `DATABASE_URL` e todas as migrações aplicadas. As suites criam dados de teste em transacções e revertem-nos no final.
 - `npm run typecheck`
 - `npm run lint`
 - `npm run build`
+- `npm run backup:db` — cria backup PostgreSQL em formato customizado, checksum SHA-256 e metadados; requer `pg_dump`, `pg_restore` e `DATABASE_URL`.
+- `RESTORE_DATABASE_URL=... RESTORE_CONFIRM=YES_RESTORE_DATABASE npm run restore:db -- ./backups/ficheiro.dump` — restaura para a base explicitamente indicada, verifica checksum e exige confirmação explícita. Nunca aponte para a base de produção sem plano de recuperação aprovado.
+- `RESTORE_DATABASE_URL=... npm run verify:db-restore` — verifica a presença das tabelas essenciais e estrutura mínima depois da restauração. O CI executa um ensaio de backup/restauro numa base de dados descartável.
 
 ## Segurança
 - Não publicar `.env`, credenciais ou segredos de sessão.
@@ -53,7 +56,7 @@ A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e conf
 - O plano de contas disponibilizado é apenas uma estrutura inicial de referência e deve ser validado por um profissional antes de utilização contabilística real.
 - O diário geral, o razão e o balancete incluem lançamentos confirmados e estornos formais; validar os totais com dados de teste antes de utilização produtiva.
 - Os cálculos de balancete, demonstração de resultados e balanço estão isolados em funções puras testáveis em `lib/accounting/report-calculations.mjs`; os testes unitários cobrem totais e equação contabilística com dados controlados. Os testes unitários não substituem a integração com PostgreSQL.
-- A página `/relatorios` disponibiliza balancete, balanço, demonstração de resultados, diário e razão por conta; a exportação é CSV. O balanço usa saldos acumulados até à data final e a demonstração de resultados usa o intervalo seleccionado.
+- A página `/relatorios` disponibiliza balancete, balanço, demonstração de resultados, diário e razão por conta; a exportação está disponível em CSV e PDF gerado no servidor. O balanço usa saldos acumulados até à data final e a demonstração de resultados usa o intervalo seleccionado.
 - O balanço e a demonstração de resultados são uma primeira implementação técnica e devem ser reconciliados com saldos conhecidos antes de utilização oficial.
 - O estorno cria um novo lançamento inverso num período aberto e preserva o original no histórico. Aplicar a migração `005_reversal_controls.sql` antes de usar a funcionalidade.
 
