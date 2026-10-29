@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarCheck, CheckCircle2, CircleAlert, ClipboardCheck, FileText, LogOut, RefreshCw, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CalendarCheck, CheckCircle2, CircleAlert, ClipboardCheck, LogOut, RefreshCw, ShieldCheck } from "lucide-react";
 
 type Company = { id: string; legalName: string };
 type Period = { periodId: string; periodLabel: string; startsOn: string; endsOn: string; periodStatus: string; closeId: string | null; closeStatus: string | null; closedAt: string | null; requiredCompleted: number | null; requiredTotal: number | null };
@@ -91,7 +91,6 @@ export default function FechoMensalPage(){
  async function logout(){await fetch("/api/auth/logout",{method:"POST"});router.replace("/login");router.refresh();}
  const completed=items.filter(i=>i.status==="completed"||(i.status==="not_applicable"&&!i.isRequired)).length;
  const requiredPending=items.filter(i=>i.isRequired&&i.status!=="completed").length;
- const selectedFresh=selected?periods.find(p=>p.periodId===selected.periodId)??selected:null;
 
  return <main className="companies-shell">
   <header className="companies-topbar"><Link className="brand" href="/"><span className="brand-mark">C<span>.</span></span><span className="brand-copy"><strong>ContaExpress</strong><small>GESTÃO CONTABILÍSTICA</small></span></Link><div className="companies-user"><Link href="/contabilidade" className="secondary-button"><ArrowLeft size={14}/> Contabilidade</Link><Link href="/tarefas" className="secondary-button"><ClipboardCheck size={14}/> Tarefas</Link><button className="icon-button" onClick={logout} aria-label="Terminar sessão"><LogOut size={17}/></button></div></header>
