@@ -85,6 +85,13 @@ try {
   assert.equal(anonymousTreasury.status, 401, "tesouraria deve exigir sessão");
   const anonymousTax = await fetch(`${baseUrl}/api/tax/obligations?entityId=00000000-0000-0000-0000-000000000000`);
   assert.equal(anonymousTax.status, 401, "fiscalidade deve exigir sessão");
+  const anonymousMappings = await fetch(baseUrl + "/api/treasury/mappings?entityId=00000000-0000-0000-0000-000000000000");
+  assert.equal(anonymousMappings.status, 401, "mapeamentos contabilísticos devem exigir sessão");
+  const anonymousPosting = await fetch(baseUrl + "/api/treasury/post", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ entityId: "00000000-0000-0000-0000-000000000000", transactionId: "00000000-0000-0000-0000-000000000000" }),
+  });
+  assert.equal(anonymousPosting.status, 401, "preparação contabilística deve exigir sessão");
 
 
   const login = await fetch(`${baseUrl}/api/auth/login`, {
