@@ -15,6 +15,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   const user = await getSession();
   if (!user) return NextResponse.json({ error: "Inicie sessão para actualizar o estado da regra." }, { status: 401 });
 
+  const admin = await db.query("SELECT EXISTS (SELECT 1 FROM platform_administrators WHERE user_id=$1) AS allowed", [user.id]);
+  if (!admin.rows[0]?.allowed) return NextResponse.json({ error: "O workflow de regras fiscais globais requer um administrador explicitamente autorizado da plataforma." }, { status: 403 });
+
   const body = await request.json().catch(() => null);
   const action = typeof body?.action === "string" ? body.action : "";
   if (!["submit_review", "approve", "activate", "retire"].includes(action)) {
