@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, FileBarChart2, RefreshCw, LogOut, CircleAlert, Scale, Printer } from "lucide-react";
+import { ArrowLeft, Download, FileBarChart2, RefreshCw, LogOut, CircleAlert, Scale, Printer, FileDown } from "lucide-react";
 
 type Company = { id: string; legalName: string; currency?: string };
 type Account = { id: string; code: string; name: string; accountType: string };
@@ -76,7 +76,7 @@ export default function ReportsPage(){
     <div className="report-filter-actions"><button className="primary-button" disabled={busy||!entityId||(report==="ledger"&&!accountId)} onClick={()=>void loadReport()}>{busy?<RefreshCw size={15}/>:<FileBarChart2 size={15}/>} Gerar relatório</button></div>
    </section>
    {data&&<section className="panel report-results">
-    <div className="report-heading"><div><p className="eyebrow">{company?.legalName??"EMPRESA"}</p><h2>{labels[report]}</h2><p>{report==="balance-sheet"?"Posição financeira até "+dateText(data.asOf):dateText(data.from??from)+" — "+dateText(data.to??to)}</p></div><div className="report-export-actions"><button className="secondary-button" onClick={()=>window.print()}><Printer size={15}/> Imprimir / Guardar PDF</button><button className="secondary-button" onClick={exportCsv}><Download size={15}/> Exportar CSV</button></div></div>
+    <div className="report-heading"><div><p className="eyebrow">{company?.legalName??"EMPRESA"}</p><h2>{labels[report]}</h2><p>{report==="balance-sheet"?"Posição financeira até "+dateText(data.asOf):dateText(data.from??from)+" — "+dateText(data.to??to)}</p></div><div className="report-export-actions"><button className="secondary-button" onClick={()=>window.print()}><Printer size={15}/> Imprimir / Guardar PDF</button><button className="secondary-button" onClick={exportCsv}><Download size={15}/> Exportar CSV</button><button className="secondary-button" onClick={exportPdf} disabled={!data||busy}><FileDown size={15}/> Exportar PDF</button></div></div>
     {data.totals&&<div className="report-metrics">
      {report==="balance-sheet"?<><Metric label="Total do activo" value={data.totals.assets}/><Metric label="Total do passivo" value={data.totals.liabilities}/><Metric label="Capital próprio" value={data.totals.equity}/><Metric label="Resultado acumulado" value={data.totals.accumulatedResult}/><Metric label="Diferença de balanço" value={data.totals.difference}/></>:
       report==="income-statement"?<><Metric label="Rendimentos" value={data.totals.income}/><Metric label="Gastos" value={data.totals.expenses}/><Metric label="Resultado líquido" value={data.totals.netResult}/></>:
