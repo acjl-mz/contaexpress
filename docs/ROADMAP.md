@@ -93,6 +93,6 @@ Nenhuma etapa é considerada concluída apenas porque a interface existe. Exige 
 - [x] Importação CSV de extractos bancários com validação de linhas, limite de tamanho e registo de auditoria.
 - [x] Sugestões de correspondência por conta, valor, sentido, referência e proximidade de datas.
 - [x] Confirmação manual transaccional, prevenção de correspondências duplicadas e histórico de importações.
-- [ ] Teste funcional ponta a ponta de importação e reconciliação com utilizador autenticado.
+- [x] Testes HTTP ponta a ponta de importação e reconciliação com utilizador autenticado, validação de datas, divergência de valores, prevenção de repetição e isolamento entre empresas.
 - [ ] Motor fiscal com regras versionadas, validação profissional e calendário legal actualizado de Moçambique.
 - [ ] Testes de integração específicos e revisão das permissões de tesouraria e fiscalidade.
