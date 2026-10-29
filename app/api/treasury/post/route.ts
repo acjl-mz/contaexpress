@@ -29,7 +29,7 @@ export async function POST(request:NextRequest) {
       if(!tx.rowCount){await client.query("ROLLBACK");return NextResponse.json({error:"Movimento de tesouraria não encontrado."},{status:404});}
       const movement=tx.rows[0];
       if(movement.journalEntryId){
-        const existing=await client.query("SELECT id,status,entry_number AS "entryNumber" FROM journal_entries WHERE id=$1 AND accounting_entity_id=$2",[movement.journalEntryId,entityId]);
+        const existing=await client.query(`SELECT id,status,entry_number AS "entryNumber" FROM journal_entries WHERE id=$1 AND accounting_entity_id=$2`,[movement.journalEntryId,entityId]);
         await client.query("COMMIT");
         return NextResponse.json({entry:existing.rows[0],alreadyPrepared:true});
       }
