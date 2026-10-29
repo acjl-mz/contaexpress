@@ -3,7 +3,7 @@
 Plataforma proprietária de gestão contabilística, fiscal e financeira, com foco inicial na operação local da ALINVEST e no mercado moçambicano.
 
 ## Estado
-Fundação, autenticação, gestão de empresas, núcleo contabilístico, relatórios, arquivo documental, tarefas, fecho mensal, tesouraria, calendário fiscal e reconciliação bancária assistida estão implementados no repositório. A aplicação continua em desenvolvimento: a próxima prioridade é concluir a validação funcional end-to-end da integração Tesouraria–Contabilidade e fechar as pendências de segurança, revisão contabilística e motor fiscal.
+Os módulos de empresas, contabilidade, arquivo documental, tarefas, fecho mensal, relatórios, tesouraria, calendário fiscal e reconciliação bancária estão implementados no MVP. Está em revisão a cobertura ponta a ponta da integração Tesouraria–Contabilidade e a nova base de regras fiscais versionadas.
 
 ## Stack prevista
 - Next.js + TypeScript
@@ -20,7 +20,7 @@ Fundação, autenticação, gestão de empresas, núcleo contabilístico, relat�
 - Regras fiscais versionadas e sujeitas a validação profissional.
 
 ## Arranque
-Consulte `docs/DEVELOPMENT.md` para preparar o ambiente, aplicar as migrações 001–013 e criar o primeiro administrador. Consulte `docs/ROADMAP.md` para o plano de implementação.
+Consulte `docs/DEVELOPMENT.md` para preparar o ambiente, aplicar as migrações 001–014 e criar o primeiro administrador. Consulte `docs/ROADMAP.md` para o plano de implementação.
 
 ## Aviso
-Esta fundação não constitui certificação fiscal nem autorização para emissão de facturas oficiais. Os requisitos aplicáveis em Moçambique deverão ser validados antes de disponibilizar essas funções.
+O registo fiscal versionado e a simulação são uma fundação técnica, não uma interpretação legal validada. Não existem taxas legais pré-carregadas; a gestão do registo global exige uma concessão explícita em `platform_administrators`. Regras reais só devem ser activadas após confirmação de fonte normativa oficial, vigência e aprovação profissional. O sistema não constitui certificação fiscal nem autorização para emissão de facturas oficiais.
