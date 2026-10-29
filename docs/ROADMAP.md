@@ -90,6 +90,9 @@ Nenhuma etapa é considerada concluída apenas porque a interface existe. Exige 
 - [x] Preparação transaccional de rascunhos contabilísticos equilibrados, com ligação ao movimento original e prevenção de duplicação.
 - [x] Testes de schema para o vínculo contabilístico e smoke tests de autenticação dos endpoints de mapeamento e preparação.
 - [ ] Confirmação de lançamento a partir da tesouraria e validação de permissões de ponta a ponta com sessão autenticada.
-- [ ] Importação de extractos bancários e reconciliação automática/assistida.
+- [x] Importação CSV de extractos bancários com validação de linhas, limite de tamanho e registo de auditoria.
+- [x] Sugestões de correspondência por conta, valor, sentido, referência e proximidade de datas.
+- [x] Confirmação manual transaccional, prevenção de correspondências duplicadas e histórico de importações.
+- [ ] Teste funcional ponta a ponta de importação e reconciliação com utilizador autenticado.
 - [ ] Motor fiscal com regras versionadas, validação profissional e calendário legal actualizado de Moçambique.
 - [ ] Testes de integração específicos e revisão das permissões de tesouraria e fiscalidade.
