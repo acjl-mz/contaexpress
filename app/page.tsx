@@ -15,7 +15,6 @@ import {
   Plus,
   ShieldCheck,
   Wallet,
-  ShieldCheck,
 } from "lucide-react";
 
 const metrics = [
