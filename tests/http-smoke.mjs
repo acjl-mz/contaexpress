@@ -24,6 +24,7 @@ const server = spawn(process.execPath, [
 let serverOutput = "";
 let fixtureClient;
 let fixtureIds;
+let passwordFixtureIds;
 server.stdout.on("data", chunk => { serverOutput += chunk.toString(); });
 server.stderr.on("data", chunk => { serverOutput += chunk.toString(); });
 
@@ -118,6 +119,95 @@ try {
   fixtureClient = new Client({ connectionString: process.env.DATABASE_URL });
   await fixtureClient.connect();
   const fixtureOrg = (await fixtureClient.query("INSERT INTO organisations (legal_name, display_name) VALUES ($1, $1) RETURNING id", [`HTTP security org ${Date.now()}`])).rows[0].id;
+
+  // Authenticated password change: reject bad credentials and invalidate all older sessions/reset links.
+  const passwordUserEmail = `http-password-change-${Date.now()}@example.test`;
+  const oldPassword = "CI-old-password-credential-2026";
+  const newPassword = "CI-new-password-credential-2026";
+  const passwordHash = await hash(oldPassword, 10);
+  const passwordUserId = (await fixtureClient.query(
+    "INSERT INTO app_users (email, full_name, password_hash, status) VALUES ($1, 'HTTP Password Change Test', $2, 'active') RETURNING id",
+    [passwordUserEmail, passwordHash],
+  )).rows[0].id;
+  await fixtureClient.query(
+    "INSERT INTO organisation_memberships (organisation_id, user_id, role) VALUES ($1, $2, 'superadmin')",
+    [fixtureOrg, passwordUserId],
+  );
+  passwordFixtureIds = { org: fixtureOrg, user: passwordUserId };
+
+  const passwordLogin = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email: passwordUserEmail, password: oldPassword }),
+  });
+  assert.equal(passwordLogin.status, 200, "utilizador de teste deve iniciar sessão antes de alterar a palavra-passe");
+  const passwordCookie = (passwordLogin.headers.get("set-cookie") || "").split(";")[0];
+
+  const unauthenticatedChange = await fetch(`${baseUrl}/api/auth/change-password`, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ currentPassword: oldPassword, newPassword, confirmPassword: newPassword }),
+  });
+  assert.equal(unauthenticatedChange.status, 401, "alteração autenticada deve exigir sessão");
+
+  const wrongCurrentPassword = await fetch(`${baseUrl}/api/auth/change-password`, {
+    method: "POST", headers: { cookie: passwordCookie, "content-type": "application/json" },
+    body: JSON.stringify({ currentPassword: "incorrect-password", newPassword, confirmPassword: newPassword }),
+  });
+  assert.equal(wrongCurrentPassword.status, 400, "palavra-passe actual incorrecta deve ser rejeitada");
+
+  const mismatchedConfirmation = await fetch(`${baseUrl}/api/auth/change-password`, {
+    method: "POST", headers: { cookie: passwordCookie, "content-type": "application/json" },
+    body: JSON.stringify({ currentPassword: oldPassword, newPassword, confirmPassword: newPassword + "-mismatch" }),
+  });
+  assert.equal(mismatchedConfirmation.status, 400, "confirmação diferente deve ser rejeitada");
+
+  const pendingResetHash = "e".repeat(64);
+  await fixtureClient.query(
+    "INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, now() + interval '30 minutes')",
+    [passwordUserId, pendingResetHash],
+  );
+
+  const changePassword = await fetch(`${baseUrl}/api/auth/change-password`, {
+    method: "POST", headers: { cookie: passwordCookie, "content-type": "application/json" },
+    body: JSON.stringify({ currentPassword: oldPassword, newPassword, confirmPassword: newPassword }),
+  });
+  const changedPayload = await changePassword.json();
+  assert.equal(changePassword.status, 200, "credenciais correctas devem permitir alterar a palavra-passe: " + JSON.stringify(changedPayload));
+  assert.match(changedPayload.message, /alterada/i);
+  const renewedPasswordCookie = (changePassword.headers.get("set-cookie") || "").split(";")[0];
+  assert.ok(renewedPasswordCookie, "a sessão corrente deve ser renovada com a nova versão");
+
+  const stalePasswordSession = await fetch(`${baseUrl}/api/auth/me`, { headers: { cookie: passwordCookie } });
+  assert.equal(stalePasswordSession.status, 401, "a sessão anterior deve ser invalidada imediatamente");
+  const oldPasswordLogin = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email: passwordUserEmail, password: oldPassword }),
+  });
+  assert.equal(oldPasswordLogin.status, 401, "a palavra-passe anterior não deve autenticar após a alteração");
+  const newPasswordLogin = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email: passwordUserEmail, password: newPassword }),
+  });
+  assert.equal(newPasswordLogin.status, 200, "a nova palavra-passe deve autenticar correctamente");
+  const renewedSession = await fetch(`${baseUrl}/api/auth/me`, { headers: { cookie: renewedPasswordCookie } });
+  assert.equal(renewedSession.status, 200, "o navegador da alteração deve continuar autenticado");
+
+  const reusedPassword = await fetch(`${baseUrl}/api/auth/change-password`, {
+    method: "POST", headers: { cookie: renewedPasswordCookie, "content-type": "application/json" },
+    body: JSON.stringify({ currentPassword: newPassword, newPassword, confirmPassword: newPassword }),
+  });
+  assert.equal(reusedPassword.status, 400, "a mesma palavra-passe não pode ser reutilizada como nova palavra-passe");
+
+  const invalidatedReset = await fixtureClient.query(
+    "SELECT used_at FROM password_reset_tokens WHERE user_id=$1 AND token_hash=$2",
+    [passwordUserId, pendingResetHash],
+  );
+  assert.ok(invalidatedReset.rows[0]?.used_at, "links de recuperação pendentes devem ser invalidados");
+  const passwordAudit = await fixtureClient.query(
+    "SELECT id FROM audit_events WHERE actor_user_id=$1 AND event_type='auth.password_changed' LIMIT 1",
+    [passwordUserId],
+  );
+  assert.equal(passwordAudit.rowCount, 1, "a alteração da palavra-passe deve ser auditada");
+
   const auditorEmail = `http-auditor-${Date.now()}@example.test`;
   const auditorPassword = "CI-auditor-test-password";
   const auditorHash = await hash(auditorPassword, 10);
@@ -366,10 +456,16 @@ try {
   const afterLogout = await fetch(`${baseUrl}/api/auth/me`);
   assert.equal(afterLogout.status, 401, "após logout, a sessão não deve ser reutilizada");
 
-  console.log("HTTP smoke tests: autenticação, sessão, acesso a empresas e logout verificados.");
+  console.log("HTTP smoke tests: autenticação, alteração de palavra-passe, sessões, acesso a empresas e logout verificados.");
 } finally {
   if (fixtureClient) {
     await fixtureClient.query("SET session_replication_role = replica").catch(() => undefined);
+    if (passwordFixtureIds) {
+      await fixtureClient.query("DELETE FROM password_reset_tokens WHERE user_id=$1", [passwordFixtureIds.user]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM audit_events WHERE actor_user_id=$1 OR target_id=$2", [passwordFixtureIds.user, passwordFixtureIds.user]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM organisation_memberships WHERE organisation_id=$1 AND user_id=$2", [passwordFixtureIds.org, passwordFixtureIds.user]).catch(() => undefined);
+      await fixtureClient.query("DELETE FROM app_users WHERE id=$1", [passwordFixtureIds.user]).catch(() => undefined);
+    }
     if (fixtureIds) {
       const f = fixtureIds;
       await fixtureClient.query("DELETE FROM journal_entry_lines WHERE accounting_entity_id = $1", [f.entity]).catch(() => undefined);

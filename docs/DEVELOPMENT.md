@@ -54,6 +54,7 @@ A partir da raiz do repositório, depois de instalar o cliente PostgreSQL e conf
 ## Recuperação de palavra-passe
 - Configurar `APP_BASE_URL`, `RESEND_API_KEY` e `RESEND_FROM_EMAIL` para activar o envio de links de recuperação através da API Resend. O endpoint responde sempre com uma mensagem genérica para não revelar se o e-mail existe.
 - Os links expiram em 30 minutos, são de uso único e o token é armazenado apenas como hash. A redefinição incrementa `session_version`, invalidando sessões anteriores. Aplicar a migração `010_password_reset.sql`.
+- Em `/perfil/seguranca`, o utilizador autenticado pode alterar a palavra-passe após confirmar a actual. A API exige 14–200 caracteres, impede a reutilização da palavra-passe actual, invalida as sessões antigas e os links de recuperação pendentes, audita a operação e renova a sessão do navegador actual. A função usa a coluna `session_version` criada pela migração 010; não requer nova migração.
 
 ## Segurança
 - Não publicar `.env`, credenciais ou segredos de sessão.
