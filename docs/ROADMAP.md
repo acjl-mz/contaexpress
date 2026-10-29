@@ -35,7 +35,8 @@
 - [x] Exportação CSV dos relatórios apresentados.
 - [x] Validação reutilizável de datas e testes unitários para datas impossíveis e intervalos invertidos.
 - [x] Testes unitários dos cálculos do balancete, demonstração de resultados e reconciliação do balanço com dados controlados.
-- [ ] Testes de integração PostgreSQL para validar consultas, estornos e saldos de abertura.
+- [x] Teste de integração PostgreSQL para validar saldos do balancete, demonstração de resultados, balanço, saldos de abertura e filtros por período com lançamentos confirmados e rascunhos.
+- [ ] Testes de integração para estornos, períodos fechados, isolamento entre empresas e concorrência.
 
 ## Etapa 4 — Documentos e acompanhamento
 - [x] Arquivo documental com metadados, hash SHA-256 e acesso controlado por empresa.
