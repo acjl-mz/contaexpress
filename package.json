@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "node --test tests/report-validation.test.mjs tests/report-calculations.test.mjs",
     "test:integration": "node --test tests/*.integration.test.mjs",
-    "bootstrap:admin": "node scripts/bootstrap-admin.mjs"
+    "bootstrap:admin": "node scripts/bootstrap-admin.mjs",
+    "test:all": "npm run test:unit && npm run test:integration"
   },
   "dependencies": {
     "next": "^15.5.6",
