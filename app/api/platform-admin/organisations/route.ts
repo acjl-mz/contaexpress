@@ -28,13 +28,22 @@ export async function GET() {
         COUNT(DISTINCT om.user_id)::int AS "userCount",
         MAX(e.created_at) AS "lastCompanyCreatedAt"
         FROM organisations o
+        WHERE NOT EXISTS (
+          SELECT 1 FROM organisation_memberships root_membership
+          JOIN platform_administrators root_admin ON root_admin.user_id=root_membership.user_id
+          WHERE root_membership.organisation_id=o.id
+        )
         LEFT JOIN accounting_entities e ON e.organisation_id=o.id
         LEFT JOIN organisation_memberships om ON om.organisation_id=o.id
         GROUP BY o.id ORDER BY o.created_at DESC`),
       db.query(`SELECT COUNT(*)::int AS "organisationCount",
         COUNT(*) FILTER (WHERE status='active')::int AS "activeCount",
         COUNT(*) FILTER (WHERE status='suspended')::int AS "suspendedCount"
-        FROM organisations`),
+        FROM organisations o WHERE NOT EXISTS (
+          SELECT 1 FROM organisation_memberships root_membership
+          JOIN platform_administrators root_admin ON root_admin.user_id=root_membership.user_id
+          WHERE root_membership.organisation_id=o.id
+        )`),
       db.query(`SELECT u.id, u.full_name AS "fullName", u.email, pa.created_at AS "grantedAt"
         FROM platform_administrators pa JOIN app_users u ON u.id=pa.user_id
         WHERE u.status='active' ORDER BY pa.created_at ASC`),
