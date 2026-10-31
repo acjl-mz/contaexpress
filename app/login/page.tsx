@@ -24,7 +24,7 @@ export default function LoginPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Não foi possível iniciar sessão.");
-      router.replace("/empresas");
+      router.replace(data.user?.role === "superadmin" ? "/admin" : "/empresas");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ocorreu um erro.");
