@@ -28,13 +28,13 @@ export async function GET() {
         COUNT(DISTINCT om.user_id)::int AS "userCount",
         MAX(e.created_at) AS "lastCompanyCreatedAt"
         FROM organisations o
+        LEFT JOIN accounting_entities e ON e.organisation_id=o.id
+        LEFT JOIN organisation_memberships om ON om.organisation_id=o.id
         WHERE NOT EXISTS (
           SELECT 1 FROM organisation_memberships root_membership
           JOIN platform_administrators root_admin ON root_admin.user_id=root_membership.user_id
           WHERE root_membership.organisation_id=o.id
         )
-        LEFT JOIN accounting_entities e ON e.organisation_id=o.id
-        LEFT JOIN organisation_memberships om ON om.organisation_id=o.id
         GROUP BY o.id ORDER BY o.created_at DESC`),
       db.query(`SELECT COUNT(*)::int AS "organisationCount",
         COUNT(*) FILTER (WHERE status='active')::int AS "activeCount",
