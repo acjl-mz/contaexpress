@@ -10,7 +10,7 @@
 2. Gerar uma chave de sessão com pelo menos 32 caracteres aleatórios e defini-la em `SESSION_SECRET`.
 3. Instalar dependências com `npm install`.
 4. Iniciar PostgreSQL com `docker compose up -d db`.
-5. Aplicar todas as migrações de `database/migrations/001_core_schema.sql` até `database/migrations/016_commercial_operations.sql`, por ordem numérica e sem saltar ficheiros.
+5. Aplicar todas as migrações de `database/migrations/001_core_schema.sql` até `database/migrations/017_platform_admin_indexes.sql`, por ordem numérica e sem saltar ficheiros.
 6. Criar o administrador inicial definindo `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD` e, opcionalmente, `ADMIN_ORGANISATION` no ambiente. A palavra-passe deve ter pelo menos 14 caracteres. Executar `npm run bootstrap:admin` uma única vez.
 7. Iniciar a aplicação com `npm run dev`.
 8. Abrir `http://localhost:3000/login` e entrar com as credenciais criadas.
@@ -22,7 +22,7 @@ for migration in database/migrations/*.sql; do
   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
 done
 ```
-A partir da raiz do repositório, depois de configurar `DATABASE_URL`. O workflow CI aplica e valida todas as migrações de 001 a 016.
+A partir da raiz do repositório, depois de configurar `DATABASE_URL`. O workflow CI aplica e valida todas as migrações de 001 a 017.
 
 ## Preparação para produção
 - Seguir a checklist em `docs/PRODUCTION_READINESS.md` antes de disponibilizar o sistema a utilizadores reais.
