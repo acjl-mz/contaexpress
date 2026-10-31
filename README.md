@@ -20,7 +20,7 @@ Os módulos de empresas, contabilidade, arquivo documental, tarefas, fecho mensa
 - Regras fiscais versionadas e sujeitas a validação profissional.
 
 ## Arranque
-Consulte `docs/DEVELOPMENT.md` para preparar o ambiente, aplicar as migrações 001–014 e criar o primeiro administrador. Consulte `docs/ROADMAP.md` para o plano de implementação.
+Consulte `docs/DEVELOPMENT.md` para preparar o ambiente, aplicar as migrações 001–017 e criar o primeiro administrador. Consulte `docs/ROADMAP.md` para o plano de implementação.
 
 ## Aviso
 O registo fiscal versionado e a simulação são uma fundação técnica, não uma interpretação legal validada. Não existem taxas legais pré-carregadas; a gestão do registo global exige uma concessão explícita em `platform_administrators`. Regras reais só devem ser activadas após confirmação de fonte normativa oficial, vigência e aprovação profissional. O sistema não constitui certificação fiscal nem autorização para emissão de facturas oficiais.
