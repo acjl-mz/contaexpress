@@ -8,8 +8,13 @@ Os módulos de empresas, contabilidade, arquivo documental, tarefas, fecho mensa
 ## Stack prevista
 - Next.js + TypeScript
 - PostgreSQL
-- Docker Compose para operação local
+- Docker Compose para desenvolvimento e validação local
 - Armazenamento documental local com metadados na base de dados
+
+## Distribuição e instalação
+A primeira versão de distribuição será destinada a Windows 10 e Windows 11. O produto final deverá instalar e gerir a aplicação e a base de dados PostgreSQL localmente, sem exigir Docker Desktop, Node.js ou ferramentas de desenvolvimento na máquina do cliente. O Supabase é apenas um ambiente temporário para concluir o desenvolvimento e validar funcionalidades; não é uma dependência da instalação final nem o destino dos dados dos clientes.
+
+Consulte [docs/INSTALLER_WINDOWS.md](docs/INSTALLER_WINDOWS.md) para os requisitos, fluxo de instalação e critérios de aceitação da distribuição Windows.
 
 ## Princípios
 - Isolamento de dados por entidade contabilística.
@@ -20,7 +25,7 @@ Os módulos de empresas, contabilidade, arquivo documental, tarefas, fecho mensa
 - Regras fiscais versionadas e sujeitas a validação profissional.
 
 ## Arranque
-Consulte `docs/DEVELOPMENT.md` para preparar o ambiente, aplicar as migrações 001–017 e criar o primeiro administrador. Consulte `docs/ROADMAP.md` para o plano de implementação.
+Consulte `docs/DEVELOPMENT.md` para preparar o ambiente de desenvolvimento, aplicar as migrações e criar o primeiro administrador. Consulte `docs/ROADMAP.md` para o plano de implementação.
 
 ## Aviso
 O registo fiscal versionado e a simulação são uma fundação técnica, não uma interpretação legal validada. Não existem taxas legais pré-carregadas; a gestão do registo global exige uma concessão explícita em `platform_administrators`. Regras reais só devem ser activadas após confirmação de fonte normativa oficial, vigência e aprovação profissional. O sistema não constitui certificação fiscal nem autorização para emissão de facturas oficiais.
