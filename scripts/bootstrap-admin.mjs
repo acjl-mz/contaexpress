@@ -23,10 +23,18 @@ try {
   if (existing.rowCount) throw new Error("Já existe um utilizador com este e-mail. O script não altera contas existentes.");
   const passwordHash = await hash(password, 12);
   const orgName = process.env.ADMIN_ORGANISATION?.trim() || "ContaExpress — Administração";
-  const org = await client.query(
-    "INSERT INTO organisations (legal_name, display_name) VALUES ($1, $1) RETURNING id",
+  // Reuse an exact-match administration organisation if it already exists.
+  // This keeps the bootstrap safe to resume after a previous partial setup.
+  let org = await client.query(
+    "SELECT id FROM organisations WHERE legal_name = $1 AND display_name = $1 ORDER BY created_at ASC LIMIT 1",
     [orgName],
   );
+  if (!org.rowCount) {
+    org = await client.query(
+      "INSERT INTO organisations (legal_name, display_name) VALUES ($1, $1) RETURNING id",
+      [orgName],
+    );
+  }
   const user = await client.query(
     "INSERT INTO app_users (email, full_name, password_hash) VALUES ($1, $2, $3) RETURNING id",
     [email, fullName, passwordHash],
