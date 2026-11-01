@@ -12,7 +12,10 @@ if (!email || !fullName || !password) throw new Error("Configure ADMIN_EMAIL, AD
 if (password.length < 14) throw new Error("ADMIN_PASSWORD deve ter pelo menos 14 caracteres.");
 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("ADMIN_EMAIL inválido.");
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: true } : undefined,
+});
 const client = await pool.connect();
 try {
   await client.query("BEGIN");
